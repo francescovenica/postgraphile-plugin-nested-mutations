@@ -425,9 +425,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
                 );
 
                 operations.upsert = {
-                  description: `A \`${
-                    gqlForeignTableType.name
-                  }\` object that will be either created and connected to this object or updated.`,
+                  description: `A \`${gqlForeignTableType.name}\` object that will be either created and connected to this object or updated.`,
                   type: isForward
                     ? upsertInputType
                     : new GraphQLList(new GraphQLNonNull(upsertInputType)),
@@ -451,9 +449,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
                 );
 
                 operations.batchUpsert = {
-                  description: `An array of \`${
-                    gqlForeignTableType.name
-                  }\` with all the same columns that will be either created and connected to this object or updated.`,
+                  description: `An array of \`${gqlForeignTableType.name}\` with all the same columns that will be either created and connected to this object or updated.`,
                   type: isForward
                     ? upsertBatchInputType
                     : new GraphQLList(new GraphQLNonNull(upsertBatchInputType)),
@@ -468,9 +464,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
               };
 
               operations.batchCreate = {
-                description: `A \`${
-                  gqlForeignTableType.name
-                }\` object that will be created and connected to this object.`,
+                description: `A \`${gqlForeignTableType.name}\` object that will be created and connected to this object.`,
                 type: isForward
                   ? createBatchInputType
                   : new GraphQLList(new GraphQLNonNull(createBatchInputType)),

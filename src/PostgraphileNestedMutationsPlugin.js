@@ -258,14 +258,8 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
       );
 
       const createAndUpsertResolveHelper = async (options) => {
-        const {
-          inputData,
-          resolver,
-          batch,
-          upsert,
-          primaryKeys,
-          tableName,
-        } = options;
+        const { inputData, resolver, batch, upsert, primaryKeys, tableName } =
+          options;
 
         const modifiedRows = {};
 
@@ -338,7 +332,15 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
           const inputArray = Array.isArray(input[tableFieldName])
             ? input[tableFieldName]
             : [input[tableFieldName]];
-          const spec = inputArray[0];
+
+          const spec = Object.assign(
+            {},
+            inputArray[0],
+            Object.prototype.hasOwnProperty.call(inputData, 0)
+              ? inputData[0]
+              : inputData,
+          );
+
           const specifiedAttributes = [
             ...new Set([
               ...table.attributes.filter((attribute) =>
@@ -358,8 +360,14 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
           const sqlColumns = specifiedAttributes.map((attribute) =>
             sql.identifier(attribute.name),
           );
-          const sqlRowValues = inputArray.map((inputRow) => {
-            return specifiedAttributes.map((attribute) => {
+
+          // to improve, didn't fully understood why I had to do this
+          const rowValues = Object.prototype.hasOwnProperty.call(inputData, 0)
+            ? [inputData[0]]
+            : [inputData];
+
+          const sqlRowValues = rowValues.map((inputRow) =>
+            specifiedAttributes.map((attribute) => {
               const key = inflection.column(attribute);
               if (inputRow[key] !== undefined) {
                 return gql2pg(
@@ -369,8 +377,9 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
                 );
               }
               return sql.raw('default');
-            });
-          });
+            }),
+          );
+
           const primaryKeys = table.primaryKeyConstraint.keyAttributes.map(
             (key) => key.name,
           );
@@ -395,14 +404,13 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
                     ', ',
                   )}`
                   : sql.fragment`default values`
-              } ${input.upsert &&
+              } ${
+            input.upsert &&
             sql.fragment`on conflict (${sql.join(
               primaryKeys.map((key) => sql.identifier(key)),
               ', ',
-            )}) do update set ${sql.join(
-              upsertConflictArray,
-              ', ',
-            )}`} returning * `;
+            )}) do update set ${sql.join(upsertConflictArray, ', ')}`
+          } returning * `;
         } else if (isPgUpdateMutationField) {
           const sqlColumns = [];
           const sqlValues = [];
@@ -410,31 +418,26 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
 
           if (isPgNodeMutation) {
             const nodeId = input[nodeIdFieldName];
-            try {
-              const { Type, identifiers } = getTypeAndIdentifiersFromNodeId(
-                nodeId,
-              );
-              const primaryKeys = table.primaryKeyConstraint.keyAttributes;
-              if (Type !== TableType) {
-                throw new Error('Mismatched type');
-              }
-              if (identifiers.length !== primaryKeys.length) {
-                throw new Error('Invalid ID');
-              }
-              condition = sql.fragment`(${sql.join(
-                table.primaryKeyConstraint.keyAttributes.map(
-                  (key, idx) =>
-                    sql.fragment`${sql.identifier(key.name)} = ${gql2pg(
-                      identifiers[idx],
-                      key.type,
-                      key.typeModifier,
-                    )}`,
-                ),
-                ') and (',
-              )})`;
-            } catch (e) {
-              throw e;
+            const { Type, identifiers } =
+              getTypeAndIdentifiersFromNodeId(nodeId);
+            const primaryKeys = table.primaryKeyConstraint.keyAttributes;
+            if (Type !== TableType) {
+              throw new Error('Mismatched type');
             }
+            if (identifiers.length !== primaryKeys.length) {
+              throw new Error('Invalid ID');
+            }
+            condition = sql.fragment`(${sql.join(
+              table.primaryKeyConstraint.keyAttributes.map(
+                (key, idx) =>
+                  sql.fragment`${sql.identifier(key.name)} = ${gql2pg(
+                    identifiers[idx],
+                    key.type,
+                    key.typeModifier,
+                  )}`,
+              ),
+              ') and (',
+            )})`;
           } else {
             const { keyAttributes: keys } = pgFieldConstraint;
             condition = sql.fragment`(${sql.join(
@@ -677,10 +680,8 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
                 foreignTable.name,
               )}
               where (${keyCondition})${rowCondition}`;
-              const {
-                text: deleteQueryText,
-                values: deleteQueryValues,
-              } = sql.compile(deleteQuery);
+              const { text: deleteQueryText, values: deleteQueryValues } =
+                sql.compile(deleteQuery);
               await pgClient.query(deleteQueryText, deleteQueryValues);
             }
 

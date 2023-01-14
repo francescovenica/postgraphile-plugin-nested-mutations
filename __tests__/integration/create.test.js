@@ -835,6 +835,7 @@ test(
     );
     
     create table p.job_relationship (
+      id serial primary key,
       type text,
       from_job_id integer references p.job(id),
       to_job_id integer references p.job(id)
