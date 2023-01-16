@@ -7,7 +7,7 @@
     "url": "git+https://github.com/MegaCookie/postgraphile-plugin-nested-mutations.git",
     "type": "git"
   },
-  "author": "Jesse van der Velden",
+  "author": "Francesco Venica",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/mlipscombe/postgraphile-plugin-nested-mutations/issues"

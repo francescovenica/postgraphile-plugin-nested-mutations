@@ -363,7 +363,7 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
 
           // to improve, didn't fully understood why I had to do this
           const rowValues = Object.prototype.hasOwnProperty.call(inputData, 0)
-            ? [inputData[0]]
+            ? Object.values(inputData)
             : [inputData];
 
           const sqlRowValues = rowValues.map((inputRow) =>
