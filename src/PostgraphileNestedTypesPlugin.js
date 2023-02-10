@@ -4,6 +4,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
     nestedMutationsSimpleFieldNames = false,
     nestedMutationsDeleteOthers = true,
     nestedMutationsOldUniqueFields = false,
+    nestedMutationsList,
   } = {},
 ) {
   builder.hook('inflection', (inflection, build) =>
@@ -94,6 +95,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
           isForward,
           foreignTable,
         } = options;
+
         const tableFieldName = inflection.tableFieldName(foreignTable);
         const keyNames = keys.map((k) => inflection.column(k));
         const foreignKeyNames = foreignKeys.map((k) => inflection.column(k));
@@ -137,13 +139,16 @@ module.exports = function PostGraphileNestedTypesPlugin(
           );
         }
 
+        console.log('reverseMutationName', reverseMutationName);
         // reverse mutation
         if (reverseMutationName) {
           return reverseMutationName;
         }
+        console.log('foreignFieldName', foreignFieldName);
         if (foreignFieldName) {
           return foreignFieldName;
         }
+        console.log('multipleFKs', multipleFKs);
         if (!multipleFKs) {
           return nestedMutationsSimpleFieldNames
             ? computedReverseMutationName
@@ -189,6 +194,8 @@ module.exports = function PostGraphileNestedTypesPlugin(
       GraphQLInputObjectType: gqlType,
     } = context;
 
+    // console.log('isInputType: ', isInputType);
+    // console.log('isPgRowType: ', isPgRowType);
     if (!isInputType || !isPgRowType) {
       return fields;
     }
@@ -207,13 +214,22 @@ module.exports = function PostGraphileNestedTypesPlugin(
 
     const tableTypeName = gqlType.name;
 
+    if (!nestedMutationsList[tableTypeName]) {
+      return fields;
+    }
+
     pgNestedPluginForwardInputTypes[table.id] = [];
     pgNestedPluginReverseInputTypes[table.id] = [];
 
     foreignKeyConstraints.forEach((constraint) => {
+      console.log('constraint.classId', constraint.classId);
+      console.log('constraint.foreignClassId', constraint.foreignClassId);
+      console.log('table.id', table.id);
+
       const isForward =
         constraint.classId === table.id &&
         constraint.classId !== constraint.foreignClassId;
+
       const foreignTable = isForward
         ? introspectionResultsByKind.classById[constraint.foreignClassId]
         : introspectionResultsByKind.classById[constraint.classId];
@@ -225,6 +241,13 @@ module.exports = function PostGraphileNestedTypesPlugin(
       }
 
       const foreignTableName = inflection.tableFieldName(foreignTable);
+
+      if (
+        nestedMutationsList[tableTypeName] &&
+        !nestedMutationsList[tableTypeName].includes(foreignTableName)
+      ) {
+        return;
+      }
 
       const foreignUniqueConstraints = foreignTable.constraints
         .filter((con) => con.type === 'u' || con.type === 'p')

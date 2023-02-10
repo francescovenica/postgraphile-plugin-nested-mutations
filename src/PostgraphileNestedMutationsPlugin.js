@@ -124,7 +124,10 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
     ) => {
       const nestedFields = pgNestedPluginForwardInputTypes[table.id];
       const output = Object.assign({}, input);
-      if (!input) return;
+      if (!input) {
+        return;
+      }
+
       await Promise.all(
         nestedFields
           .filter((k) => input[k.name])
@@ -202,6 +205,8 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
                 }),
             );
 
+            console.log('fieldValue', fieldValue);
+
             if (fieldValue.create) {
               const createData = fieldValue.create;
               const resolver = pgNestedResolvers[foreignTable.id];
@@ -224,6 +229,7 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
                 { pgClient },
                 resolveInfo,
               );
+
               foreignKeys.forEach((k, idx) => {
                 output[inflection.column(keys[idx])] =
                   resolveResult.data[`__pk__${k.name}`];
@@ -356,6 +362,7 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
               ),
             ]),
           ];
+
           // Loop thru columns and "SQLify" them
           const sqlColumns = specifiedAttributes.map((attribute) =>
             sql.identifier(attribute.name),
@@ -452,6 +459,7 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
               ') and (',
             )})`;
           }
+
           table.attributes
             .filter((attr) => pgColumnFilter(attr, build, context))
             .filter((attr) => !omit(attr, 'update'))
@@ -491,8 +499,13 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
         await Promise.all(
           Object.keys(inputData).map(async (key) => {
             const nestedField = pgNestedPluginReverseInputTypes[table.id].find(
-              (obj) => obj.name === key,
+              (obj) => {
+                console.log('key: ', obj.name, key);
+                return obj.name === key;
+              },
             );
+
+            // console.log('nestedField: ', nestedField);
             if (!nestedField || !inputData[key]) {
               return;
             }
@@ -506,7 +519,7 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
             } = nestedField;
             const modifiedRows = [];
 
-            const fieldValue = inputData[key];
+            const fieldValue = Array.isArray(inputData[key]);
             const { primaryKeyConstraint } = foreignTable;
             const primaryKeys = primaryKeyConstraint
               ? primaryKeyConstraint.keyAttributes

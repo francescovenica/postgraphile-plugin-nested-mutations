@@ -68,9 +68,8 @@ module.exports = function PostGraphileNestedConnectorsPlugin(builder) {
         if (isNodeIdConnector) {
           const nodeId = input[nodeIdFieldName];
           const primaryKeys = foreignTable.primaryKeyConstraint.keyAttributes;
-          const { Type, identifiers } = build.getTypeAndIdentifiersFromNodeId(
-            nodeId,
-          );
+          const { Type, identifiers } =
+            build.getTypeAndIdentifiersFromNodeId(nodeId);
           if (Type !== ForeignTableType) {
             throw new Error('Mismatched type');
           }

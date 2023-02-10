@@ -79,9 +79,8 @@ module.exports = function PostGraphileNestedUpdatersPlugin(builder) {
         if (isNodeIdUpdater) {
           const nodeId = input[nodeIdFieldName];
           const primaryKeys = foreignTable.primaryKeyConstraint.keyAttributes;
-          const { Type, identifiers } = build.getTypeAndIdentifiersFromNodeId(
-            nodeId,
-          );
+          const { Type, identifiers } =
+            build.getTypeAndIdentifiersFromNodeId(nodeId);
           const ForeignTableType = pgGetGqlTypeByTypeIdAndModifier(
             foreignTable.type.id,
             null,
@@ -214,9 +213,8 @@ module.exports = function PostGraphileNestedUpdatersPlugin(builder) {
               foreignTable.type.id,
               null,
             );
-            const foreignTableFieldName = inflection.tableFieldName(
-              foreignTable,
-            );
+            const foreignTableFieldName =
+              inflection.tableFieldName(foreignTable);
             const patchFieldName = inflection.patchField(foreignTableFieldName);
             const ForeignTablePatch = getTypeByName(
               inflection.patchType(ForeignTableType.name),
