@@ -519,6 +519,12 @@
     "@types/yargs" "^15.0.0"
     "chalk" "^4.0.0"
 
+"@megacookie/postgraphile-plugin-nested-mutations@file:../../postgraphile-plugin-nested-mutations":
+  "resolved" "file:../../postgraphile-plugin-nested-mutations"
+  "version" "1.1.2"
+  dependencies:
+    "graphile-build-pg" "^4.11.2"
+
 "@sinonjs/commons@^1.7.0":
   "integrity" "sha512-sruwd86RJHdsVf/AtBoijDmUqJp3B6hF/DGC23C+JaegnDHaZyewCjoVGTdg3J0uz3Zs7NnIT05OBOmML72lQw=="
   "resolved" "https://registry.npmjs.org/@sinonjs/commons/-/commons-1.8.2.tgz"

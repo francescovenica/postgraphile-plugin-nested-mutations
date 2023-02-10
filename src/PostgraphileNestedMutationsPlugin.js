@@ -130,7 +130,7 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
       const output = Object.assign({}, input);
       await Promise.all(
         nestedFields
-          .filter((k) => input[k.name])
+          .filter((k) => input && input[k.name])
           .map(async (nestedField) => {
             const {
               constraint,
