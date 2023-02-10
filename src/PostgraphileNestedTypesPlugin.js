@@ -4,6 +4,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
     nestedMutationsSimpleFieldNames = false,
     nestedMutationsDeleteOthers = true,
     nestedMutationsOldUniqueFields = false,
+    nestedMutationsList,
   } = {},
 ) {
   builder.hook('inflection', (inflection, build) =>
@@ -171,6 +172,10 @@ module.exports = function PostGraphileNestedTypesPlugin(
     }
 
     const tableTypeName = gqlType.name;
+
+    if (nestedMutationsList && !nestedMutationsList[tableTypeName]) {
+      return fields;
+    }
 
     pgNestedPluginForwardInputTypes[table.id] = [];
     pgNestedPluginReverseInputTypes[table.id] = [];

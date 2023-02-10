@@ -1194,6 +1194,114 @@ test(
 );
 
 test(
+  'forward deeply nested update mutation with nested updateByUuId',
+  withSchema({
+    setup: `
+      create table p.parent (
+        uuid serial primary key,
+        name text not null
+      );
+
+      create table p.child (
+        uuid serial primary key,
+        parent_id integer,
+        name text not null,
+        constraint child_parent_fkey foreign key (parent_id)
+          references p.parent (uuid)
+      );
+
+      create table p.grandchild (
+        uuid serial primary key,
+        child_id integer not null,
+        name text not null,
+        constraint grandchild_child_fkey foreign key (child_id)
+          references p.child (uuid)
+      );
+
+      insert into p.parent values(1, 'test parent');
+      insert into p.child values(1, 1, 'test child 1');
+      insert into p.grandchild values(1, 1, 'test grandchild 1');
+    `,
+    test: async ({ schema, pgClient }) => {
+      const query = `
+        mutation {
+          updateParentByUuid(
+            input: {
+              uuid: 1
+              parentPatch: {
+                name: "updated parent"
+                childrenUsingUuid: {
+                  updateByUuid: {
+                    uuid: 1
+                    childPatch: {
+                      name: "updated child 1"
+                      grandchildrenUsingUuid: {
+                        updateByUuid: {
+                          uuid: 1
+                          grandchildPatch: {
+                            name: "updated grandchild 1 of child 1"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ) {
+            parent {
+              uuid
+              name
+              childrenByParentId {
+                nodes {
+                  uuid
+                  parentId
+                  name
+                  grandchildrenByChildId {
+                    nodes {
+                      uuid
+                      childId
+                      name
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        `;
+      expect(schema).toMatchSnapshot();
+
+      const result = await graphql(schema, query, null, { pgClient });
+      expect(result).not.toHaveProperty('errors');
+
+      const { data } = result;
+
+      expect(data.updateParentByUuid.parent.name).toEqual(`updated parent`);
+      data.updateParentByUuid.parent.childrenByParentId.nodes.map((n) =>
+        expect(n.parentId).toBe(data.updateParentByUuid.parent.uuid),
+      );
+
+      expect(
+        data.updateParentByUuid.parent.childrenByParentId.nodes,
+      ).toHaveLength(1);
+      expect(
+        data.updateParentByUuid.parent.childrenByParentId.nodes[0].name,
+      ).toEqual('updated child 1');
+
+      expect(
+        data.updateParentByUuid.parent.childrenByParentId.nodes[0]
+          .grandchildrenByChildId.nodes,
+      ).toHaveLength(1);
+      expect(
+        data.updateParentByUuid.parent.childrenByParentId.nodes[0]
+          .grandchildrenByChildId.nodes[0].name,
+      ).toEqual('updated grandchild 1 of child 1');
+    },
+  }),
+);
+
+test(
   'forward deeply nested update mutation with nested updateById',
   withSchema({
     setup: `

@@ -141,7 +141,11 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
             } = nestedField;
             const fieldValue = input[fieldName];
 
-            if (fieldValue.updateById || fieldValue.updateByNodeId) {
+            const hasUpdate = Object.keys(fieldValue).find((k) =>
+              k.includes('updateBy'),
+            );
+
+            if (hasUpdate) {
               await Promise.all(
                 Object.keys(fieldValue).map(async (k) => {
                   (Array.isArray(fieldValue[k])
@@ -651,7 +655,11 @@ module.exports = function PostGraphileNestedMutationPlugin(builder) {
               );
             }
 
-            if (fieldValue.updateById || fieldValue.updateByNodeId) {
+            const hasUpdate = Object.keys(fieldValue).find((k) =>
+              k.includes('updateBy'),
+            );
+
+            if (hasUpdate) {
               await Promise.all(
                 Object.keys(fieldValue)
                   .filter((f) => fieldValue[f])
