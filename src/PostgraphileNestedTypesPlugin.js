@@ -129,29 +129,6 @@ module.exports = function PostGraphileNestedTypesPlugin(
     });
   });
 
-  // builder.hook(
-  //   'GraphQLInputObjectType:fields:field',
-  //   (field, build, context) => {
-  //     const {
-  //       scope: { isInputType },
-  //     } = context;
-
-  //     if (!isInputType) {
-  //       return field;
-  //     }
-
-  //     // const {
-  //     //   scope: { isInputType, isPgRowType, pgIntrospection: table },
-  //     //   GraphQLInputObjectType: gqlType,
-  //     // } = context;
-
-  //     console.log('context: ', context.Self);
-  //     console.log('isInputType: ', isInputType);
-
-  //     return field;
-  //   },
-  // );
-
   builder.hook('GraphQLInputObjectType:fields', (fields, build, context) => {
     const {
       inflection,
@@ -199,10 +176,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
     pgNestedPluginForwardInputTypes[table.id] = [];
     pgNestedPluginReverseInputTypes[table.id] = [];
 
-    const enabled = true;
-
-    console.log('tableTypeName', tableTypeName);
-    if (enabled && nestedMutationsList && !nestedMutationsList[tableTypeName]) {
+    if (nestedMutationsList && !nestedMutationsList[tableTypeName]) {
       return fields;
     }
 
@@ -373,9 +347,7 @@ module.exports = function PostGraphileNestedTypesPlugin(
         },
       );
 
-      console.log('fieldName', fieldName);
       if (
-        enabled &&
         nestedMutationsList &&
         nestedMutationsList[tableTypeName] &&
         nestedMutationsList[tableTypeName].includes(fieldName)
