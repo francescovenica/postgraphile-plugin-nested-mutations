@@ -129,6 +129,29 @@ module.exports = function PostGraphileNestedTypesPlugin(
     });
   });
 
+  // builder.hook(
+  //   'GraphQLInputObjectType:fields:field',
+  //   (field, build, context) => {
+  //     const {
+  //       scope: { isInputType },
+  //     } = context;
+
+  //     if (!isInputType) {
+  //       return field;
+  //     }
+
+  //     // const {
+  //     //   scope: { isInputType, isPgRowType, pgIntrospection: table },
+  //     //   GraphQLInputObjectType: gqlType,
+  //     // } = context;
+
+  //     console.log('context: ', context.Self);
+  //     console.log('isInputType: ', isInputType);
+
+  //     return field;
+  //   },
+  // );
+
   builder.hook('GraphQLInputObjectType:fields', (fields, build, context) => {
     const {
       inflection,
@@ -173,12 +196,15 @@ module.exports = function PostGraphileNestedTypesPlugin(
 
     const tableTypeName = gqlType.name;
 
-    if (nestedMutationsList && !nestedMutationsList[tableTypeName]) {
-      return fields;
-    }
-
     pgNestedPluginForwardInputTypes[table.id] = [];
     pgNestedPluginReverseInputTypes[table.id] = [];
+
+    const enabled = true;
+
+    console.log('tableTypeName', tableTypeName);
+    if (enabled && nestedMutationsList && !nestedMutationsList[tableTypeName]) {
+      return fields;
+    }
 
     foreignKeyConstraints.forEach((constraint) => {
       const isForward = constraint.classId === table.id;
@@ -216,8 +242,6 @@ module.exports = function PostGraphileNestedTypesPlugin(
       if (
         (!connectable && !creatable && !deleteable && !updateable) ||
         omit(foreignTable, 'read')
-        // || primaryKey.keyAttributes.some(key => omit(key, 'read'))
-        // || foreignPrimaryKey.keyAttributes.some(key => omit(key, 'read'))
       ) {
         return;
       }
@@ -349,28 +373,36 @@ module.exports = function PostGraphileNestedTypesPlugin(
         },
       );
 
-      if (isForward) {
-        pgNestedPluginForwardInputTypes[table.id].push({
-          name: fieldName,
-          constraint,
-          table,
-          foreignTable,
-          keys: constraint.keyAttributes,
-          foreignKeys: constraint.foreignKeyAttributes,
-          connectorInputField,
-          isUnique,
-        });
-      } else {
-        pgNestedPluginReverseInputTypes[table.id].push({
-          name: fieldName,
-          constraint,
-          table,
-          foreignTable,
-          keys: constraint.keyAttributes,
-          foreignKeys: constraint.foreignKeyAttributes,
-          connectorInputField,
-          isUnique,
-        });
+      console.log('fieldName', fieldName);
+      if (
+        enabled &&
+        nestedMutationsList &&
+        nestedMutationsList[tableTypeName] &&
+        nestedMutationsList[tableTypeName].includes(fieldName)
+      ) {
+        if (isForward) {
+          pgNestedPluginForwardInputTypes[table.id].push({
+            name: fieldName,
+            constraint,
+            table,
+            foreignTable,
+            keys: constraint.keyAttributes,
+            foreignKeys: constraint.foreignKeyAttributes,
+            connectorInputField,
+            isUnique,
+          });
+        } else {
+          pgNestedPluginReverseInputTypes[table.id].push({
+            name: fieldName,
+            constraint,
+            table,
+            foreignTable,
+            keys: constraint.keyAttributes,
+            foreignKeys: constraint.foreignKeyAttributes,
+            connectorInputField,
+            isUnique,
+          });
+        }
       }
     });
 
