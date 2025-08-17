@@ -139,16 +139,15 @@ module.exports = function PostGraphileNestedTypesPlugin(
           );
         }
 
-        console.log('reverseMutationName', reverseMutationName);
         // reverse mutation
         if (reverseMutationName) {
           return reverseMutationName;
         }
-        console.log('foreignFieldName', foreignFieldName);
+
         if (foreignFieldName) {
           return foreignFieldName;
         }
-        console.log('multipleFKs', multipleFKs);
+
         if (!multipleFKs) {
           return nestedMutationsSimpleFieldNames
             ? computedReverseMutationName
@@ -222,10 +221,6 @@ module.exports = function PostGraphileNestedTypesPlugin(
     pgNestedPluginReverseInputTypes[table.id] = [];
 
     foreignKeyConstraints.forEach((constraint) => {
-      console.log('constraint.classId', constraint.classId);
-      console.log('constraint.foreignClassId', constraint.foreignClassId);
-      console.log('table.id', table.id);
-
       const isForward =
         constraint.classId === table.id &&
         constraint.classId !== constraint.foreignClassId;
