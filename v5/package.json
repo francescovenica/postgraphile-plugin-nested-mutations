@@ -1,0 +1,16 @@
+{
+  "name": "postgraphile-plugin-nested-mutations-v5-dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test --test-concurrency=1"
+  },
+  "devDependencies": {
+    "@graphile/simplify-inflection": "^9.0.0",
+    "@graphql-inspector/core": "^6.0.0",
+    "@haathie/postgraphile-fancy-mutations": "0.1.3",
+    "postgraphile": "5.1.5",
+    "typescript": "^5.9.0"
+  }
+}

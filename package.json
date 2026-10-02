@@ -37,6 +37,9 @@
   },
   "jest": {
     "testRegex": "__tests__/.*\\.test\\.js$",
+    "setupFilesAfterEnv": [
+      "<rootDir>/__tests__/parity/recorder.js"
+    ],
     "collectCoverageFrom": [
       "src/*.js",
       "index.js"
