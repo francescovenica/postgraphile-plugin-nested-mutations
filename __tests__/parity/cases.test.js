@@ -13,6 +13,7 @@ const { graphql, printSchema } = require('graphql');
 const { createPostGraphileSchema } = require('postgraphile-core');
 const { withPgClient } = require('../helpers');
 const { dumpSchema, resetSettings } = require('../../parity/dbstate.cjs');
+const { stable } = require('../../parity/normalize.cjs');
 
 const casesDir = path.resolve(__dirname, '../../parity/cases');
 const goldenDir = path.resolve(__dirname, '../../parity/golden');
@@ -122,7 +123,7 @@ files.forEach((file) => {
       const name = `cases-${file.replace(/\.cjs$/, '')}`;
       fs.writeFileSync(
         path.join(goldenDir, `${name}.json`),
-        `${JSON.stringify({ file: name, cases: recorded }, null, 2)}\n`,
+        `${JSON.stringify(stable({ file: name, cases: recorded }), null, 2)}\n`,
       );
     });
   });

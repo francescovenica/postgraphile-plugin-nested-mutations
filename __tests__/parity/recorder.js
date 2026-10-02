@@ -18,6 +18,7 @@ if (process.env.PARITY_RECORD) {
     };
   });
   const { dumpSchema } = require('../../parity/dbstate.cjs');
+  const { stable } = require('../../parity/normalize.cjs');
   const helpers = require('../helpers');
   const { createPostGraphileSchema } = require('postgraphile-core');
   const { printSchema } = require('graphql');
@@ -104,7 +105,7 @@ if (process.env.PARITY_RECORD) {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(
       path.join(dir, `${name}.json`),
-      `${JSON.stringify({ file: name, cases }, null, 2)}\n`,
+      `${JSON.stringify(stable({ file: name, cases }), null, 2)}\n`,
     );
   });
 }
