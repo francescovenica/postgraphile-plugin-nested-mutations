@@ -1,0 +1,155 @@
+{
+  "success": {
+    "result": {
+      "data": {
+        "createParent": {
+          "parent": {
+            "id": 3,
+            "name": "createParent",
+            "childrenByParentId": {
+              "nodes": [
+                {
+                  "id": 1,
+                  "name": "c",
+                  "grandchildrenByChildId": {
+                    "nodes": [
+                      {
+                        "id": 1,
+                        "name": "g"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "before": {
+      "parent": 2,
+      "child": 0,
+      "grandchild": 0
+    },
+    "after": {
+      "parent": 3,
+      "child": 1,
+      "grandchild": 1
+    }
+  },
+  "deepFailure": {
+    "result": {
+      "errors": [
+        {
+          "message": "new row for relation \"grandchild\" violates check constraint \"grandchild_name_check\"",
+          "locations": [
+            {
+              "line": 2,
+              "column": 3
+            }
+          ],
+          "path": [
+            "createParent"
+          ]
+        }
+      ],
+      "data": {
+        "createParent": null
+      }
+    },
+    "before": {
+      "parent": 2,
+      "child": 0,
+      "grandchild": 0
+    },
+    "after": {
+      "parent": 2,
+      "child": 0,
+      "grandchild": 0
+    }
+  },
+  "deepRlsDenial": {
+    "result": {
+      "errors": [
+        {
+          "message": "new row violates row-level security policy for table \"grandchild\"",
+          "locations": [
+            {
+              "line": 2,
+              "column": 5
+            }
+          ],
+          "path": [
+            "createParent"
+          ]
+        }
+      ],
+      "data": {
+        "createParent": null
+      }
+    },
+    "before": {
+      "parent": 2,
+      "child": 0,
+      "grandchild": 0
+    },
+    "after": {
+      "parent": 2,
+      "child": 0,
+      "grandchild": 0
+    }
+  },
+  "multipleRootFields": {
+    "result": {
+      "errors": [
+        {
+          "message": "new row for relation \"grandchild\" violates check constraint \"grandchild_name_check\"",
+          "locations": [
+            {
+              "line": 14,
+              "column": 3
+            }
+          ],
+          "path": [
+            "second"
+          ]
+        }
+      ],
+      "data": {
+        "first": {
+          "parent": {
+            "id": 3,
+            "name": "first",
+            "childrenByParentId": {
+              "nodes": [
+                {
+                  "id": 1,
+                  "name": "c",
+                  "grandchildrenByChildId": {
+                    "nodes": [
+                      {
+                        "id": 1,
+                        "name": "g"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "second": null
+      }
+    },
+    "before": {
+      "parent": 2,
+      "child": 0,
+      "grandchild": 0
+    },
+    "after": {
+      "parent": 3,
+      "child": 1,
+      "grandchild": 1
+    }
+  }
+}
