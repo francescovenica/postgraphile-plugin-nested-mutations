@@ -374,4 +374,74 @@ module.exports = [
       },
     ],
   },
+  {
+    name: 'nested input passed through variables',
+    setup: compositeSetup,
+    operations: [
+      {
+        source: `mutation ($input: CreateOrgInput!) {
+          createOrg(input: $input) { ${orgSelection} }
+        }`,
+        variableValues: {
+          input: {
+            org: {
+              orgId: 5,
+              code: 'v',
+              name: 'Org V',
+              membersUsingOrgIdAndCode: {
+                create: [{ name: 'v1' }, { name: 'v2' }, { name: 'v3' }],
+                connectById: [{ id: 4 }],
+              },
+            },
+          },
+        },
+      },
+      {
+        source: `mutation ($id: Int!, $patch: MemberPatch!) {
+          updateMemberById(input: { id: $id, memberPatch: $patch }) { ${memberSelection} }
+        }`,
+        variableValues: {
+          id: 4,
+          patch: {
+            name: 'loner joins',
+            orgToOrgIdAndOrgCode: {
+              connectByOrgIdAndCode: { orgId: 1, code: 'a' },
+            },
+          },
+        },
+      },
+      {
+        source: `mutation ($members: [MemberOrgFkeyMemberCreateInput!]) {
+          createOrg(input: { org: {
+            orgId: 6, code: "w", name: "Org W"
+            membersUsingOrgIdAndCode: { create: $members }
+          } }) { ${orgSelection} }
+        }`,
+        variableValues: { members: [] },
+      },
+    ],
+  },
+  {
+    name: 'deleteBy on a forward relation (V4 links the row, it does not delete it)',
+    setup: compositeSetup,
+    operations: [
+      {
+        source: `mutation {
+          createMember(input: { member: {
+            name: "deleter"
+            orgToOrgIdAndOrgCode: { deleteByOrgIdAndCode: { orgId: 1, code: "b" } }
+          } }) { ${memberSelection} }
+        }`,
+      },
+      {
+        source: `mutation {
+          createMember(input: { member: {
+            name: "deleter"
+            orgToOrgIdAndOrgCode: { deleteByOrgIdAndCode: { orgId: 7, code: "nope" } }
+          } }) { ${memberSelection} }
+        }`,
+        expect: { errors: true, dbUnchanged: true },
+      },
+    ],
+  },
 ];

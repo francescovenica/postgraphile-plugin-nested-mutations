@@ -93,6 +93,8 @@ for (const file of files) {
     file: string;
     cases: GoldenCase[];
   };
+  // e.g. transactions-v4.json, used by transaction.test.ts
+  if (!Array.isArray(golden.cases)) continue;
   describe(golden.file, () => {
     for (const goldenCase of golden.cases) {
       test(goldenCase.name, async () => {

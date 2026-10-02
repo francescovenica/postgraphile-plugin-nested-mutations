@@ -3,6 +3,14 @@
   "version": "1.1.0",
   "description": "Nested mutations plugin for PostGraphile",
   "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./v5": {
+      "types": "./v5/dist/index.d.ts",
+      "default": "./v5/dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "repository": {
     "url": "git+https://github.com/mlipscombe/postgraphile-plugin-nested-mutations.git",
     "type": "git"
@@ -14,11 +22,29 @@
   },
   "scripts": {
     "test": "scripts/test jest -i",
-    "lint": "eslint index.js src/**/*.js"
+    "test:v4": "scripts/test jest -i",
+    "test:v5": "scripts/test npm --prefix v5 test",
+    "test:parity": "PARITY_RECORD=1 scripts/test jest -i && scripts/test npm --prefix v5 test",
+    "build:v5": "npm --prefix v5 run build",
+    "prepack": "npm run build:v5",
+    "lint": "eslint index.js src/**/*.js",
+    "typecheck:v5": "npm --prefix v5 run typecheck"
   },
   "peerDependencies": {
     "graphile-build-pg": "^4.14.1",
-    "postgraphile-core": "^4.2.0"
+    "postgraphile-core": "^4.2.0",
+    "postgraphile": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "graphile-build-pg": {
+      "optional": true
+    },
+    "postgraphile-core": {
+      "optional": true
+    },
+    "postgraphile": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
@@ -47,7 +73,10 @@
     ]
   },
   "files": [
-    "src"
+    "src",
+    "index.js",
+    "v5/dist",
+    "MIGRATION.md"
   ],
   "prettier": {
     "trailingComma": "all",

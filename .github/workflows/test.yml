@@ -1,0 +1,47 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nested_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/nested_test
+      GRAPHILE_ENV: development
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            v5/package-lock.json
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - run: npm ci
+      - run: npm ci --prefix v5
+      - run: npm run lint
+      - run: npm run typecheck:v5
+      - run: npm run build:v5
+      # V4 suite; also re-records the golden files the V5 suite compares against
+      - name: test:v4
+        run: PARITY_RECORD=1 npm run test:v4
+      - name: test:v5
+        run: npm run test:v5
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parity-report
+          path: parity/report.md
