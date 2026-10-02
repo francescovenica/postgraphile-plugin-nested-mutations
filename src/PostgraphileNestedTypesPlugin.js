@@ -348,9 +348,9 @@ module.exports = function PostGraphileNestedTypesPlugin(
       );
 
       if (
-        nestedMutationsList &&
-        nestedMutationsList[tableTypeName] &&
-        nestedMutationsList[tableTypeName].includes(fieldName)
+        !nestedMutationsList ||
+        (nestedMutationsList[tableTypeName] &&
+          nestedMutationsList[tableTypeName].includes(fieldName))
       ) {
         if (isForward) {
           pgNestedPluginForwardInputTypes[table.id].push({
