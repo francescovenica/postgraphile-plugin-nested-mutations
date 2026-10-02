@@ -60,4 +60,29 @@ module.exports = [
       'database state is compared as usual.',
     errorMessages: ['unmatched update'],
   },
+  {
+    file: 'cases-relations',
+    case: 'foreign key referencing a non-primary-key unique column',
+    reason:
+      'A forward `create` through an FK that references a non-primary-key ' +
+      'unique column left the FK NULL in V4 (it read the new row\'s primary ' +
+      'key columns only). V5 sets the referenced value. Expected V4 results ' +
+      'and database states are adjusted by exactly that from this operation on.',
+    adjust: {
+      fromOperation: 0,
+      result(result, operation) {
+        if (operation !== 0) return result;
+        const { player } = result.data.createPlayer;
+        player.teamCode = 'blue';
+        player.teamByTeamCode = { code: 'blue', name: 'Blue team' };
+        return result;
+      },
+      dbState(state) {
+        const p1 = state.player.find((row) => row.id === 1);
+        p1.team_code = 'blue';
+        return state;
+      },
+    },
+  },
 ];
+

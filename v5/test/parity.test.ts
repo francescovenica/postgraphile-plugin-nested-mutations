@@ -50,8 +50,15 @@ const knownDifferences = require("../../parity/known-differences.cjs") as Array<
   operation?: number;
   schemaChanges?: string[];
   errorMessages?: string[];
+  adjust?: {
+    fromOperation: number;
+    result?: (result: any, operation: number) => any;
+    dbState?: (state: any) => any;
+  };
 }>;
 const knownPluginDifferences: string[] = [];
+const adjustedCase = (known: typeof knownDifferences) =>
+  known.some((k) => k.adjust);
 
 interface GoldenOperation {
   source: string;
@@ -149,6 +156,11 @@ for (const file of files) {
             }
           }
 
+          if (adjustedCase(known)) {
+            knownPluginDifferences.push(
+              `${golden.file} › ${goldenCase.name}: ${known.find((k) => k.adjust)!.reason}`,
+            );
+          }
           if (knownSchema) {
             // Documented deliberate difference: it must be exactly this.
             assert.deepEqual(
@@ -182,7 +194,17 @@ for (const file of files) {
             "initial database state differs",
           );
           let before = await dumpSchema(query);
+          const adjusted = known.find((k) => k.adjust)?.adjust;
+          const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
           for (const [i, op] of goldenCase.operations.entries()) {
+            const expectedResult =
+              adjusted?.result && i >= adjusted.fromOperation
+                ? adjusted.result(clone(op.result), i)
+                : op.result;
+            const expectedDbState =
+              adjusted?.dbState && i >= adjusted.fromOperation
+                ? adjusted.dbState(clone(op.dbState))
+                : op.dbState;
             const result = await execute(
               withPlugin,
               op.source,
@@ -211,14 +233,14 @@ for (const file of files) {
             } else {
               assert.deepEqual(
                 normalizeResult(result),
-                normalizeResult(op.result),
+                normalizeResult(expectedResult),
                 `operation ${i} result differs`,
               );
             }
             const after = await dumpSchema(query);
             assert.deepEqual(
               normalizeDb(after),
-              normalizeDb(op.dbState),
+              normalizeDb(expectedDbState),
               `operation ${i} database state differs`,
             );
             if (op.expect?.errors !== undefined) {

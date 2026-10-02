@@ -906,13 +906,228 @@
           }
         },
         {
+          "source": "mutation {\n          updateAccountByEmail(input: {\n            email: \"one@example.com\"\n            clientMutationId: \"by-unique\"\n            accountPatch: { profileUsingId: { create: [{ bio: \"second\" }] } }\n          }) { clientMutationId \n  account { id email profileByAccountId { id accountId bio } }\n }\n        }",
+          "variableValues": null,
+          "result": {
+            "data": {
+              "updateAccountByEmail": {
+                "clientMutationId": "by-unique",
+                "account": {
+                  "id": 1,
+                  "email": "one@example.com",
+                  "profileByAccountId": {
+                    "id": 3,
+                    "accountId": 1,
+                    "bio": "second"
+                  }
+                }
+              }
+            }
+          },
+          "dbState": {
+            "account": [
+              {
+                "id": 1,
+                "email": "one@example.com"
+              },
+              {
+                "id": 2,
+                "email": "two@example.com"
+              },
+              {
+                "id": 3,
+                "email": "three@example.com"
+              }
+            ],
+            "profile": [
+              {
+                "id": 1,
+                "account_id": 2,
+                "bio": "first, edited"
+              },
+              {
+                "id": 2,
+                "account_id": 3,
+                "bio": "third"
+              },
+              {
+                "id": 3,
+                "account_id": 1,
+                "bio": "second"
+              }
+            ]
+          }
+        },
+        {
+          "source": "mutation {\n          updateAccount(input: {\n            nodeId: \"WyJhY2NvdW50cyIsMV0=\"\n            clientMutationId: \"by-node\"\n            accountPatch: { email: \"uno@example.com\" }\n          }) { clientMutationId \n  account { id email profileByAccountId { id accountId bio } }\n }\n        }",
+          "variableValues": null,
+          "result": {
+            "data": {
+              "updateAccount": {
+                "clientMutationId": "by-node",
+                "account": {
+                  "id": 1,
+                  "email": "uno@example.com",
+                  "profileByAccountId": {
+                    "id": 3,
+                    "accountId": 1,
+                    "bio": "second"
+                  }
+                }
+              }
+            }
+          },
+          "dbState": {
+            "account": [
+              {
+                "id": 1,
+                "email": "uno@example.com"
+              },
+              {
+                "id": 2,
+                "email": "two@example.com"
+              },
+              {
+                "id": 3,
+                "email": "three@example.com"
+              }
+            ],
+            "profile": [
+              {
+                "id": 1,
+                "account_id": 2,
+                "bio": "first, edited"
+              },
+              {
+                "id": 2,
+                "account_id": 3,
+                "bio": "third"
+              },
+              {
+                "id": 3,
+                "account_id": 1,
+                "bio": "second"
+              }
+            ]
+          }
+        },
+        {
+          "source": "mutation {\n          updateAccount(input: {\n            nodeId: \"WyJwcm9maWxlcyIsMV0=\"\n            clientMutationId: \"wrong-type\"\n            accountPatch: { email: \"nope@example.com\" }\n          }) { clientMutationId \n  account { id email profileByAccountId { id accountId bio } }\n }\n        }",
+          "variableValues": null,
+          "expect": {
+            "errors": true,
+            "dbUnchanged": true
+          },
+          "result": {
+            "errors": [
+              {
+                "message": "Mismatched type",
+                "locations": [
+                  {
+                    "line": 2,
+                    "column": 11
+                  }
+                ],
+                "path": [
+                  "updateAccount"
+                ]
+              }
+            ],
+            "data": {
+              "updateAccount": null
+            }
+          },
+          "dbState": {
+            "account": [
+              {
+                "id": 1,
+                "email": "uno@example.com"
+              },
+              {
+                "id": 2,
+                "email": "two@example.com"
+              },
+              {
+                "id": 3,
+                "email": "three@example.com"
+              }
+            ],
+            "profile": [
+              {
+                "id": 1,
+                "account_id": 2,
+                "bio": "first, edited"
+              },
+              {
+                "id": 2,
+                "account_id": 3,
+                "bio": "third"
+              },
+              {
+                "id": 3,
+                "account_id": 1,
+                "bio": "second"
+              }
+            ]
+          }
+        },
+        {
+          "source": "mutation {\n          updateAccountById(input: {\n            id: 99\n            clientMutationId: \"no-row\"\n            accountPatch: { email: \"ghost@example.com\" }\n          }) { clientMutationId \n  account { id email profileByAccountId { id accountId bio } }\n }\n        }",
+          "variableValues": null,
+          "expect": {
+            "errors": false,
+            "dbUnchanged": true
+          },
+          "result": {
+            "data": {
+              "updateAccountById": {
+                "clientMutationId": "no-row",
+                "account": null
+              }
+            }
+          },
+          "dbState": {
+            "account": [
+              {
+                "id": 1,
+                "email": "uno@example.com"
+              },
+              {
+                "id": 2,
+                "email": "two@example.com"
+              },
+              {
+                "id": 3,
+                "email": "three@example.com"
+              }
+            ],
+            "profile": [
+              {
+                "id": 1,
+                "account_id": 2,
+                "bio": "first, edited"
+              },
+              {
+                "id": 2,
+                "account_id": 3,
+                "bio": "third"
+              },
+              {
+                "id": 3,
+                "account_id": 1,
+                "bio": "second"
+              }
+            ]
+          }
+        },
+        {
           "source": "mutation {\n          createProfile(input: { profile: {\n            bio: \"with new account\"\n            accountToAccountId: { create: { email: \"five@example.com\" } }\n          } }) { profile { id bio accountByAccountId { id email } } }\n        }",
           "variableValues": null,
           "result": {
             "data": {
               "createProfile": {
                 "profile": {
-                  "id": 3,
+                  "id": 4,
                   "bio": "with new account",
                   "accountByAccountId": {
                     "id": 5,
@@ -926,7 +1141,7 @@
             "account": [
               {
                 "id": 1,
-                "email": "one@example.com"
+                "email": "uno@example.com"
               },
               {
                 "id": 2,
@@ -954,6 +1169,11 @@
               },
               {
                 "id": 3,
+                "account_id": 1,
+                "bio": "second"
+              },
+              {
+                "id": 4,
                 "account_id": 5,
                 "bio": "with new account"
               }
@@ -2108,6 +2328,166 @@
                 "org_id": 1,
                 "code": "b",
                 "name": "Org B"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "foreign key referencing a non-primary-key unique column",
+      "setup": "\n      create table p.team (\n        id serial primary key,\n        code text not null unique,\n        name text not null\n      );\n      create table p.player (\n        id serial primary key,\n        team_code text,\n        name text not null,\n        constraint player_team_fkey foreign key (team_code) references p.team (code)\n      );\n      insert into p.team (code, name) values ('red', 'Red team');\n    ",
+      "options": {},
+      "schemas": {
+        "base": "\"\"\"The root query type which gives access points into the data universe.\"\"\"\ntype Query implements Node {\n  \"\"\"\n  Exposes the root query type nested one level down. This is helpful for Relay 1\n  which can only query top level fields if they are in a particular form.\n  \"\"\"\n  query: Query!\n\n  \"\"\"\n  The root query type must be a `Node` to work well with Relay 1 mutations. This just resolves to `query`.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"Fetches an object given its globally unique `ID`.\"\"\"\n  node(\n    \"\"\"The globally unique `ID`.\"\"\"\n    nodeId: ID!\n  ): Node\n\n  \"\"\"Reads and enables pagination through a set of `Player`.\"\"\"\n  allPlayers(\n    \"\"\"Only read the first `n` values of the set.\"\"\"\n    first: Int\n\n    \"\"\"Only read the last `n` values of the set.\"\"\"\n    last: Int\n\n    \"\"\"\n    Skip the first `n` values from our `after` cursor, an alternative to cursor\n    based pagination. May not be used with `last`.\n    \"\"\"\n    offset: Int\n\n    \"\"\"Read all values in the set before (above) this cursor.\"\"\"\n    before: Cursor\n\n    \"\"\"Read all values in the set after (below) this cursor.\"\"\"\n    after: Cursor\n\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n\n    \"\"\"\n    A condition to be used in determining which values should be returned by the collection.\n    \"\"\"\n    condition: PlayerCondition\n  ): PlayersConnection\n\n  \"\"\"Reads and enables pagination through a set of `Team`.\"\"\"\n  allTeams(\n    \"\"\"Only read the first `n` values of the set.\"\"\"\n    first: Int\n\n    \"\"\"Only read the last `n` values of the set.\"\"\"\n    last: Int\n\n    \"\"\"\n    Skip the first `n` values from our `after` cursor, an alternative to cursor\n    based pagination. May not be used with `last`.\n    \"\"\"\n    offset: Int\n\n    \"\"\"Read all values in the set before (above) this cursor.\"\"\"\n    before: Cursor\n\n    \"\"\"Read all values in the set after (below) this cursor.\"\"\"\n    after: Cursor\n\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n\n    \"\"\"\n    A condition to be used in determining which values should be returned by the collection.\n    \"\"\"\n    condition: TeamCondition\n  ): TeamsConnection\n  playerById(id: Int!): Player\n  teamById(id: Int!): Team\n  teamByCode(code: String!): Team\n\n  \"\"\"Reads a single `Player` using its globally unique `ID`.\"\"\"\n  player(\n    \"\"\"The globally unique `ID` to be used in selecting a single `Player`.\"\"\"\n    nodeId: ID!\n  ): Player\n\n  \"\"\"Reads a single `Team` using its globally unique `ID`.\"\"\"\n  team(\n    \"\"\"The globally unique `ID` to be used in selecting a single `Team`.\"\"\"\n    nodeId: ID!\n  ): Team\n}\n\n\"\"\"An object with a globally unique `ID`.\"\"\"\ninterface Node {\n  \"\"\"\n  A globally unique identifier. Can be used in various places throughout the system to identify this single value.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"A connection to a list of `Player` values.\"\"\"\ntype PlayersConnection {\n  \"\"\"A list of `Player` objects.\"\"\"\n  nodes: [Player]!\n\n  \"\"\"\n  A list of edges which contains the `Player` and cursor to aid in pagination.\n  \"\"\"\n  edges: [PlayersEdge!]!\n\n  \"\"\"Information to aid in pagination.\"\"\"\n  pageInfo: PageInfo!\n\n  \"\"\"The count of *all* `Player` you could get from the connection.\"\"\"\n  totalCount: Int!\n}\n\ntype Player implements Node {\n  \"\"\"\n  A globally unique identifier. Can be used in various places throughout the system to identify this single value.\n  \"\"\"\n  nodeId: ID!\n  id: Int!\n  teamCode: String\n  name: String!\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n}\n\ntype Team implements Node {\n  \"\"\"\n  A globally unique identifier. Can be used in various places throughout the system to identify this single value.\n  \"\"\"\n  nodeId: ID!\n  id: Int!\n  code: String!\n  name: String!\n\n  \"\"\"Reads and enables pagination through a set of `Player`.\"\"\"\n  playersByTeamCode(\n    \"\"\"Only read the first `n` values of the set.\"\"\"\n    first: Int\n\n    \"\"\"Only read the last `n` values of the set.\"\"\"\n    last: Int\n\n    \"\"\"\n    Skip the first `n` values from our `after` cursor, an alternative to cursor\n    based pagination. May not be used with `last`.\n    \"\"\"\n    offset: Int\n\n    \"\"\"Read all values in the set before (above) this cursor.\"\"\"\n    before: Cursor\n\n    \"\"\"Read all values in the set after (below) this cursor.\"\"\"\n    after: Cursor\n\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n\n    \"\"\"\n    A condition to be used in determining which values should be returned by the collection.\n    \"\"\"\n    condition: PlayerCondition\n  ): PlayersConnection!\n}\n\n\"\"\"A location in a connection that can be used for resuming pagination.\"\"\"\nscalar Cursor\n\n\"\"\"Methods to use when ordering `Player`.\"\"\"\nenum PlayersOrderBy {\n  NATURAL\n  ID_ASC\n  ID_DESC\n  TEAM_CODE_ASC\n  TEAM_CODE_DESC\n  NAME_ASC\n  NAME_DESC\n  PRIMARY_KEY_ASC\n  PRIMARY_KEY_DESC\n}\n\n\"\"\"\nA condition to be used against `Player` object types. All fields are tested for equality and combined with a logical ‘and.’\n\"\"\"\ninput PlayerCondition {\n  \"\"\"Checks for equality with the object’s `id` field.\"\"\"\n  id: Int\n\n  \"\"\"Checks for equality with the object’s `teamCode` field.\"\"\"\n  teamCode: String\n\n  \"\"\"Checks for equality with the object’s `name` field.\"\"\"\n  name: String\n}\n\n\"\"\"A `Player` edge in the connection.\"\"\"\ntype PlayersEdge {\n  \"\"\"A cursor for use in pagination.\"\"\"\n  cursor: Cursor\n\n  \"\"\"The `Player` at the end of the edge.\"\"\"\n  node: Player\n}\n\n\"\"\"Information about pagination in a connection.\"\"\"\ntype PageInfo {\n  \"\"\"When paginating forwards, are there more items?\"\"\"\n  hasNextPage: Boolean!\n\n  \"\"\"When paginating backwards, are there more items?\"\"\"\n  hasPreviousPage: Boolean!\n\n  \"\"\"When paginating backwards, the cursor to continue.\"\"\"\n  startCursor: Cursor\n\n  \"\"\"When paginating forwards, the cursor to continue.\"\"\"\n  endCursor: Cursor\n}\n\n\"\"\"A connection to a list of `Team` values.\"\"\"\ntype TeamsConnection {\n  \"\"\"A list of `Team` objects.\"\"\"\n  nodes: [Team]!\n\n  \"\"\"\n  A list of edges which contains the `Team` and cursor to aid in pagination.\n  \"\"\"\n  edges: [TeamsEdge!]!\n\n  \"\"\"Information to aid in pagination.\"\"\"\n  pageInfo: PageInfo!\n\n  \"\"\"The count of *all* `Team` you could get from the connection.\"\"\"\n  totalCount: Int!\n}\n\n\"\"\"A `Team` edge in the connection.\"\"\"\ntype TeamsEdge {\n  \"\"\"A cursor for use in pagination.\"\"\"\n  cursor: Cursor\n\n  \"\"\"The `Team` at the end of the edge.\"\"\"\n  node: Team\n}\n\n\"\"\"Methods to use when ordering `Team`.\"\"\"\nenum TeamsOrderBy {\n  NATURAL\n  ID_ASC\n  ID_DESC\n  CODE_ASC\n  CODE_DESC\n  NAME_ASC\n  NAME_DESC\n  PRIMARY_KEY_ASC\n  PRIMARY_KEY_DESC\n}\n\n\"\"\"\nA condition to be used against `Team` object types. All fields are tested for equality and combined with a logical ‘and.’\n\"\"\"\ninput TeamCondition {\n  \"\"\"Checks for equality with the object’s `id` field.\"\"\"\n  id: Int\n\n  \"\"\"Checks for equality with the object’s `code` field.\"\"\"\n  code: String\n\n  \"\"\"Checks for equality with the object’s `name` field.\"\"\"\n  name: String\n}\n\n\"\"\"\nThe root mutation type which contains root level fields which mutate data.\n\"\"\"\ntype Mutation {\n  \"\"\"Creates a single `Player`.\"\"\"\n  createPlayer(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: CreatePlayerInput!\n  ): CreatePlayerPayload\n\n  \"\"\"Creates a single `Team`.\"\"\"\n  createTeam(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: CreateTeamInput!\n  ): CreateTeamPayload\n\n  \"\"\"Updates a single `Player` using its globally unique id and a patch.\"\"\"\n  updatePlayer(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdatePlayerInput!\n  ): UpdatePlayerPayload\n\n  \"\"\"Updates a single `Player` using a unique key and a patch.\"\"\"\n  updatePlayerById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdatePlayerByIdInput!\n  ): UpdatePlayerPayload\n\n  \"\"\"Updates a single `Team` using its globally unique id and a patch.\"\"\"\n  updateTeam(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdateTeamInput!\n  ): UpdateTeamPayload\n\n  \"\"\"Updates a single `Team` using a unique key and a patch.\"\"\"\n  updateTeamById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdateTeamByIdInput!\n  ): UpdateTeamPayload\n\n  \"\"\"Updates a single `Team` using a unique key and a patch.\"\"\"\n  updateTeamByCode(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdateTeamByCodeInput!\n  ): UpdateTeamPayload\n\n  \"\"\"Deletes a single `Player` using its globally unique id.\"\"\"\n  deletePlayer(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeletePlayerInput!\n  ): DeletePlayerPayload\n\n  \"\"\"Deletes a single `Player` using a unique key.\"\"\"\n  deletePlayerById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeletePlayerByIdInput!\n  ): DeletePlayerPayload\n\n  \"\"\"Deletes a single `Team` using its globally unique id.\"\"\"\n  deleteTeam(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeleteTeamInput!\n  ): DeleteTeamPayload\n\n  \"\"\"Deletes a single `Team` using a unique key.\"\"\"\n  deleteTeamById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeleteTeamByIdInput!\n  ): DeleteTeamPayload\n\n  \"\"\"Deletes a single `Team` using a unique key.\"\"\"\n  deleteTeamByCode(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeleteTeamByCodeInput!\n  ): DeleteTeamPayload\n}\n\n\"\"\"The output of our create `Player` mutation.\"\"\"\ntype CreatePlayerPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` that was created by this mutation.\"\"\"\n  player: Player\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n\n  \"\"\"An edge for our `Player`. May be used by Relay 1.\"\"\"\n  playerEdge(\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n  ): PlayersEdge\n}\n\n\"\"\"All input for the create `Player` mutation.\"\"\"\ninput CreatePlayerInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` to be created by this mutation.\"\"\"\n  player: PlayerInput!\n}\n\n\"\"\"An input for mutations affecting `Player`\"\"\"\ninput PlayerInput {\n  id: Int\n  teamCode: String\n  name: String!\n}\n\n\"\"\"The output of our create `Team` mutation.\"\"\"\ntype CreateTeamPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` that was created by this mutation.\"\"\"\n  team: Team\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"An edge for our `Team`. May be used by Relay 1.\"\"\"\n  teamEdge(\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n  ): TeamsEdge\n}\n\n\"\"\"All input for the create `Team` mutation.\"\"\"\ninput CreateTeamInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` to be created by this mutation.\"\"\"\n  team: TeamInput!\n}\n\n\"\"\"An input for mutations affecting `Team`\"\"\"\ninput TeamInput {\n  id: Int\n  code: String!\n  name: String!\n}\n\n\"\"\"The output of our update `Player` mutation.\"\"\"\ntype UpdatePlayerPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` that was updated by this mutation.\"\"\"\n  player: Player\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n\n  \"\"\"An edge for our `Player`. May be used by Relay 1.\"\"\"\n  playerEdge(\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n  ): PlayersEdge\n}\n\n\"\"\"All input for the `updatePlayer` mutation.\"\"\"\ninput UpdatePlayerInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Player` to be updated.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"\n  An object where the defined keys will be set on the `Player` being updated.\n  \"\"\"\n  playerPatch: PlayerPatch!\n}\n\n\"\"\"\nRepresents an update to a `Player`. Fields that are set will be updated.\n\"\"\"\ninput PlayerPatch {\n  id: Int\n  teamCode: String\n  name: String\n}\n\n\"\"\"All input for the `updatePlayerById` mutation.\"\"\"\ninput UpdatePlayerByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  An object where the defined keys will be set on the `Player` being updated.\n  \"\"\"\n  playerPatch: PlayerPatch!\n  id: Int!\n}\n\n\"\"\"The output of our update `Team` mutation.\"\"\"\ntype UpdateTeamPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` that was updated by this mutation.\"\"\"\n  team: Team\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"An edge for our `Team`. May be used by Relay 1.\"\"\"\n  teamEdge(\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n  ): TeamsEdge\n}\n\n\"\"\"All input for the `updateTeam` mutation.\"\"\"\ninput UpdateTeamInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Team` to be updated.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"\n  An object where the defined keys will be set on the `Team` being updated.\n  \"\"\"\n  teamPatch: TeamPatch!\n}\n\n\"\"\"Represents an update to a `Team`. Fields that are set will be updated.\"\"\"\ninput TeamPatch {\n  id: Int\n  code: String\n  name: String\n}\n\n\"\"\"All input for the `updateTeamById` mutation.\"\"\"\ninput UpdateTeamByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  An object where the defined keys will be set on the `Team` being updated.\n  \"\"\"\n  teamPatch: TeamPatch!\n  id: Int!\n}\n\n\"\"\"All input for the `updateTeamByCode` mutation.\"\"\"\ninput UpdateTeamByCodeInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  An object where the defined keys will be set on the `Team` being updated.\n  \"\"\"\n  teamPatch: TeamPatch!\n  code: String!\n}\n\n\"\"\"The output of our delete `Player` mutation.\"\"\"\ntype DeletePlayerPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` that was deleted by this mutation.\"\"\"\n  player: Player\n  deletedPlayerId: ID\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n\n  \"\"\"An edge for our `Player`. May be used by Relay 1.\"\"\"\n  playerEdge(\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n  ): PlayersEdge\n}\n\n\"\"\"All input for the `deletePlayer` mutation.\"\"\"\ninput DeletePlayerInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Player` to be deleted.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"All input for the `deletePlayerById` mutation.\"\"\"\ninput DeletePlayerByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n  id: Int!\n}\n\n\"\"\"The output of our delete `Team` mutation.\"\"\"\ntype DeleteTeamPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` that was deleted by this mutation.\"\"\"\n  team: Team\n  deletedTeamId: ID\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"An edge for our `Team`. May be used by Relay 1.\"\"\"\n  teamEdge(\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n  ): TeamsEdge\n}\n\n\"\"\"All input for the `deleteTeam` mutation.\"\"\"\ninput DeleteTeamInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Team` to be deleted.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"All input for the `deleteTeamById` mutation.\"\"\"\ninput DeleteTeamByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n  id: Int!\n}\n\n\"\"\"All input for the `deleteTeamByCode` mutation.\"\"\"\ninput DeleteTeamByCodeInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n  code: String!\n}\n",
+        "plugin": "\"\"\"The root query type which gives access points into the data universe.\"\"\"\ntype Query implements Node {\n  \"\"\"\n  Exposes the root query type nested one level down. This is helpful for Relay 1\n  which can only query top level fields if they are in a particular form.\n  \"\"\"\n  query: Query!\n\n  \"\"\"\n  The root query type must be a `Node` to work well with Relay 1 mutations. This just resolves to `query`.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"Fetches an object given its globally unique `ID`.\"\"\"\n  node(\n    \"\"\"The globally unique `ID`.\"\"\"\n    nodeId: ID!\n  ): Node\n\n  \"\"\"Reads and enables pagination through a set of `Player`.\"\"\"\n  allPlayers(\n    \"\"\"Only read the first `n` values of the set.\"\"\"\n    first: Int\n\n    \"\"\"Only read the last `n` values of the set.\"\"\"\n    last: Int\n\n    \"\"\"\n    Skip the first `n` values from our `after` cursor, an alternative to cursor\n    based pagination. May not be used with `last`.\n    \"\"\"\n    offset: Int\n\n    \"\"\"Read all values in the set before (above) this cursor.\"\"\"\n    before: Cursor\n\n    \"\"\"Read all values in the set after (below) this cursor.\"\"\"\n    after: Cursor\n\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n\n    \"\"\"\n    A condition to be used in determining which values should be returned by the collection.\n    \"\"\"\n    condition: PlayerCondition\n  ): PlayersConnection\n\n  \"\"\"Reads and enables pagination through a set of `Team`.\"\"\"\n  allTeams(\n    \"\"\"Only read the first `n` values of the set.\"\"\"\n    first: Int\n\n    \"\"\"Only read the last `n` values of the set.\"\"\"\n    last: Int\n\n    \"\"\"\n    Skip the first `n` values from our `after` cursor, an alternative to cursor\n    based pagination. May not be used with `last`.\n    \"\"\"\n    offset: Int\n\n    \"\"\"Read all values in the set before (above) this cursor.\"\"\"\n    before: Cursor\n\n    \"\"\"Read all values in the set after (below) this cursor.\"\"\"\n    after: Cursor\n\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n\n    \"\"\"\n    A condition to be used in determining which values should be returned by the collection.\n    \"\"\"\n    condition: TeamCondition\n  ): TeamsConnection\n  playerById(id: Int!): Player\n  teamById(id: Int!): Team\n  teamByCode(code: String!): Team\n\n  \"\"\"Reads a single `Player` using its globally unique `ID`.\"\"\"\n  player(\n    \"\"\"The globally unique `ID` to be used in selecting a single `Player`.\"\"\"\n    nodeId: ID!\n  ): Player\n\n  \"\"\"Reads a single `Team` using its globally unique `ID`.\"\"\"\n  team(\n    \"\"\"The globally unique `ID` to be used in selecting a single `Team`.\"\"\"\n    nodeId: ID!\n  ): Team\n}\n\n\"\"\"An object with a globally unique `ID`.\"\"\"\ninterface Node {\n  \"\"\"\n  A globally unique identifier. Can be used in various places throughout the system to identify this single value.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"A connection to a list of `Player` values.\"\"\"\ntype PlayersConnection {\n  \"\"\"A list of `Player` objects.\"\"\"\n  nodes: [Player]!\n\n  \"\"\"\n  A list of edges which contains the `Player` and cursor to aid in pagination.\n  \"\"\"\n  edges: [PlayersEdge!]!\n\n  \"\"\"Information to aid in pagination.\"\"\"\n  pageInfo: PageInfo!\n\n  \"\"\"The count of *all* `Player` you could get from the connection.\"\"\"\n  totalCount: Int!\n}\n\ntype Player implements Node {\n  \"\"\"\n  A globally unique identifier. Can be used in various places throughout the system to identify this single value.\n  \"\"\"\n  nodeId: ID!\n  id: Int!\n  teamCode: String\n  name: String!\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n}\n\ntype Team implements Node {\n  \"\"\"\n  A globally unique identifier. Can be used in various places throughout the system to identify this single value.\n  \"\"\"\n  nodeId: ID!\n  id: Int!\n  code: String!\n  name: String!\n\n  \"\"\"Reads and enables pagination through a set of `Player`.\"\"\"\n  playersByTeamCode(\n    \"\"\"Only read the first `n` values of the set.\"\"\"\n    first: Int\n\n    \"\"\"Only read the last `n` values of the set.\"\"\"\n    last: Int\n\n    \"\"\"\n    Skip the first `n` values from our `after` cursor, an alternative to cursor\n    based pagination. May not be used with `last`.\n    \"\"\"\n    offset: Int\n\n    \"\"\"Read all values in the set before (above) this cursor.\"\"\"\n    before: Cursor\n\n    \"\"\"Read all values in the set after (below) this cursor.\"\"\"\n    after: Cursor\n\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n\n    \"\"\"\n    A condition to be used in determining which values should be returned by the collection.\n    \"\"\"\n    condition: PlayerCondition\n  ): PlayersConnection!\n}\n\n\"\"\"A location in a connection that can be used for resuming pagination.\"\"\"\nscalar Cursor\n\n\"\"\"Methods to use when ordering `Player`.\"\"\"\nenum PlayersOrderBy {\n  NATURAL\n  ID_ASC\n  ID_DESC\n  TEAM_CODE_ASC\n  TEAM_CODE_DESC\n  NAME_ASC\n  NAME_DESC\n  PRIMARY_KEY_ASC\n  PRIMARY_KEY_DESC\n}\n\n\"\"\"\nA condition to be used against `Player` object types. All fields are tested for equality and combined with a logical ‘and.’\n\"\"\"\ninput PlayerCondition {\n  \"\"\"Checks for equality with the object’s `id` field.\"\"\"\n  id: Int\n\n  \"\"\"Checks for equality with the object’s `teamCode` field.\"\"\"\n  teamCode: String\n\n  \"\"\"Checks for equality with the object’s `name` field.\"\"\"\n  name: String\n}\n\n\"\"\"A `Player` edge in the connection.\"\"\"\ntype PlayersEdge {\n  \"\"\"A cursor for use in pagination.\"\"\"\n  cursor: Cursor\n\n  \"\"\"The `Player` at the end of the edge.\"\"\"\n  node: Player\n}\n\n\"\"\"Information about pagination in a connection.\"\"\"\ntype PageInfo {\n  \"\"\"When paginating forwards, are there more items?\"\"\"\n  hasNextPage: Boolean!\n\n  \"\"\"When paginating backwards, are there more items?\"\"\"\n  hasPreviousPage: Boolean!\n\n  \"\"\"When paginating backwards, the cursor to continue.\"\"\"\n  startCursor: Cursor\n\n  \"\"\"When paginating forwards, the cursor to continue.\"\"\"\n  endCursor: Cursor\n}\n\n\"\"\"A connection to a list of `Team` values.\"\"\"\ntype TeamsConnection {\n  \"\"\"A list of `Team` objects.\"\"\"\n  nodes: [Team]!\n\n  \"\"\"\n  A list of edges which contains the `Team` and cursor to aid in pagination.\n  \"\"\"\n  edges: [TeamsEdge!]!\n\n  \"\"\"Information to aid in pagination.\"\"\"\n  pageInfo: PageInfo!\n\n  \"\"\"The count of *all* `Team` you could get from the connection.\"\"\"\n  totalCount: Int!\n}\n\n\"\"\"A `Team` edge in the connection.\"\"\"\ntype TeamsEdge {\n  \"\"\"A cursor for use in pagination.\"\"\"\n  cursor: Cursor\n\n  \"\"\"The `Team` at the end of the edge.\"\"\"\n  node: Team\n}\n\n\"\"\"Methods to use when ordering `Team`.\"\"\"\nenum TeamsOrderBy {\n  NATURAL\n  ID_ASC\n  ID_DESC\n  CODE_ASC\n  CODE_DESC\n  NAME_ASC\n  NAME_DESC\n  PRIMARY_KEY_ASC\n  PRIMARY_KEY_DESC\n}\n\n\"\"\"\nA condition to be used against `Team` object types. All fields are tested for equality and combined with a logical ‘and.’\n\"\"\"\ninput TeamCondition {\n  \"\"\"Checks for equality with the object’s `id` field.\"\"\"\n  id: Int\n\n  \"\"\"Checks for equality with the object’s `code` field.\"\"\"\n  code: String\n\n  \"\"\"Checks for equality with the object’s `name` field.\"\"\"\n  name: String\n}\n\n\"\"\"\nThe root mutation type which contains root level fields which mutate data.\n\"\"\"\ntype Mutation {\n  \"\"\"Creates a single `Player`.\"\"\"\n  createPlayer(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: CreatePlayerInput!\n  ): CreatePlayerPayload\n\n  \"\"\"Creates a single `Team`.\"\"\"\n  createTeam(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: CreateTeamInput!\n  ): CreateTeamPayload\n\n  \"\"\"Updates a single `Player` using its globally unique id and a patch.\"\"\"\n  updatePlayer(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdatePlayerInput!\n  ): UpdatePlayerPayload\n\n  \"\"\"Updates a single `Player` using a unique key and a patch.\"\"\"\n  updatePlayerById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdatePlayerByIdInput!\n  ): UpdatePlayerPayload\n\n  \"\"\"Updates a single `Team` using its globally unique id and a patch.\"\"\"\n  updateTeam(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdateTeamInput!\n  ): UpdateTeamPayload\n\n  \"\"\"Updates a single `Team` using a unique key and a patch.\"\"\"\n  updateTeamById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdateTeamByIdInput!\n  ): UpdateTeamPayload\n\n  \"\"\"Updates a single `Team` using a unique key and a patch.\"\"\"\n  updateTeamByCode(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: UpdateTeamByCodeInput!\n  ): UpdateTeamPayload\n\n  \"\"\"Deletes a single `Player` using its globally unique id.\"\"\"\n  deletePlayer(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeletePlayerInput!\n  ): DeletePlayerPayload\n\n  \"\"\"Deletes a single `Player` using a unique key.\"\"\"\n  deletePlayerById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeletePlayerByIdInput!\n  ): DeletePlayerPayload\n\n  \"\"\"Deletes a single `Team` using its globally unique id.\"\"\"\n  deleteTeam(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeleteTeamInput!\n  ): DeleteTeamPayload\n\n  \"\"\"Deletes a single `Team` using a unique key.\"\"\"\n  deleteTeamById(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeleteTeamByIdInput!\n  ): DeleteTeamPayload\n\n  \"\"\"Deletes a single `Team` using a unique key.\"\"\"\n  deleteTeamByCode(\n    \"\"\"\n    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.\n    \"\"\"\n    input: DeleteTeamByCodeInput!\n  ): DeleteTeamPayload\n}\n\n\"\"\"The output of our create `Player` mutation.\"\"\"\ntype CreatePlayerPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` that was created by this mutation.\"\"\"\n  player: Player\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n\n  \"\"\"An edge for our `Player`. May be used by Relay 1.\"\"\"\n  playerEdge(\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n  ): PlayersEdge\n}\n\n\"\"\"All input for the create `Player` mutation.\"\"\"\ninput CreatePlayerInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` to be created by this mutation.\"\"\"\n  player: PlayerInput!\n}\n\n\"\"\"An input for mutations affecting `Player`\"\"\"\ninput PlayerInput {\n  id: Int\n  teamCode: String\n  name: String!\n  teamToTeamCode: PlayerTeamFkeyInput\n}\n\n\"\"\"Input for the nested mutation of `team` in the `PlayerInput` mutation.\"\"\"\ninput PlayerTeamFkeyInput {\n  \"\"\"The primary key(s) for `team` for the far side of the relationship.\"\"\"\n  connectById: TeamTeamPkeyConnect\n\n  \"\"\"The primary key(s) for `team` for the far side of the relationship.\"\"\"\n  connectByCode: TeamTeamCodeKeyConnect\n\n  \"\"\"The primary key(s) for `team` for the far side of the relationship.\"\"\"\n  connectByNodeId: TeamNodeIdConnect\n\n  \"\"\"The primary key(s) for `team` for the far side of the relationship.\"\"\"\n  deleteById: TeamTeamPkeyDelete\n\n  \"\"\"The primary key(s) for `team` for the far side of the relationship.\"\"\"\n  deleteByCode: TeamTeamCodeKeyDelete\n\n  \"\"\"The primary key(s) for `team` for the far side of the relationship.\"\"\"\n  deleteByNodeId: TeamNodeIdDelete\n\n  \"\"\"\n  The primary key(s) and patch data for `team` for the far side of the relationship.\n  \"\"\"\n  updateById: TeamOnPlayerForPlayerTeamFkeyUsingTeamPkeyUpdate\n\n  \"\"\"\n  The primary key(s) and patch data for `team` for the far side of the relationship.\n  \"\"\"\n  updateByCode: TeamOnPlayerForPlayerTeamFkeyUsingTeamCodeKeyUpdate\n\n  \"\"\"\n  The primary key(s) and patch data for `team` for the far side of the relationship.\n  \"\"\"\n  updateByNodeId: PlayerOnPlayerForPlayerTeamFkeyNodeIdUpdate\n\n  \"\"\"\n  A `TeamInput` object that will be created and connected to this object.\n  \"\"\"\n  create: PlayerTeamFkeyTeamCreateInput\n}\n\n\"\"\"The fields on `team` to look up the row to connect.\"\"\"\ninput TeamTeamPkeyConnect {\n  id: Int!\n}\n\n\"\"\"The fields on `team` to look up the row to connect.\"\"\"\ninput TeamTeamCodeKeyConnect {\n  code: String!\n}\n\n\"\"\"The globally unique `ID` look up for the row to connect.\"\"\"\ninput TeamNodeIdConnect {\n  \"\"\"\n  The globally unique `ID` which identifies a single `team` to be connected.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"The fields on `team` to look up the row to delete.\"\"\"\ninput TeamTeamPkeyDelete {\n  id: Int!\n}\n\n\"\"\"The fields on `team` to look up the row to delete.\"\"\"\ninput TeamTeamCodeKeyDelete {\n  code: String!\n}\n\n\"\"\"The globally unique `ID` look up for the row to delete.\"\"\"\ninput TeamNodeIdDelete {\n  \"\"\"\n  The globally unique `ID` which identifies a single `team` to be deleted.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"The fields on `team` to look up the row to update.\"\"\"\ninput TeamOnPlayerForPlayerTeamFkeyUsingTeamPkeyUpdate {\n  \"\"\"\n  An object where the defined keys will be set on the `team` being updated.\n  \"\"\"\n  teamPatch: updateTeamOnPlayerForPlayerTeamFkeyPatch!\n  id: Int!\n}\n\n\"\"\"\nAn object where the defined keys will be set on the `team` being updated.\n\"\"\"\ninput updateTeamOnPlayerForPlayerTeamFkeyPatch {\n  id: Int\n  code: String\n  name: String\n  playersUsingCode: PlayerTeamFkeyInverseInput\n}\n\n\"\"\"Input for the nested mutation of `player` in the `TeamInput` mutation.\"\"\"\ninput PlayerTeamFkeyInverseInput {\n  \"\"\"\n  Flag indicating whether all other `player` records that match this relationship should be removed.\n  \"\"\"\n  deleteOthers: Boolean\n\n  \"\"\"The primary key(s) for `player` for the far side of the relationship.\"\"\"\n  connectById: [PlayerPlayerPkeyConnect!]\n\n  \"\"\"The primary key(s) for `player` for the far side of the relationship.\"\"\"\n  connectByNodeId: [PlayerNodeIdConnect!]\n\n  \"\"\"The primary key(s) for `player` for the far side of the relationship.\"\"\"\n  deleteById: [PlayerPlayerPkeyDelete!]\n\n  \"\"\"The primary key(s) for `player` for the far side of the relationship.\"\"\"\n  deleteByNodeId: [PlayerNodeIdDelete!]\n\n  \"\"\"\n  The primary key(s) and patch data for `player` for the far side of the relationship.\n  \"\"\"\n  updateById: [PlayerOnPlayerForPlayerTeamFkeyUsingPlayerPkeyUpdate!]\n\n  \"\"\"\n  The primary key(s) and patch data for `player` for the far side of the relationship.\n  \"\"\"\n  updateByNodeId: [TeamOnPlayerForPlayerTeamFkeyNodeIdUpdate!]\n\n  \"\"\"\n  A `PlayerInput` object that will be created and connected to this object.\n  \"\"\"\n  create: [PlayerTeamFkeyPlayerCreateInput!]\n}\n\n\"\"\"The fields on `player` to look up the row to connect.\"\"\"\ninput PlayerPlayerPkeyConnect {\n  id: Int!\n}\n\n\"\"\"The globally unique `ID` look up for the row to connect.\"\"\"\ninput PlayerNodeIdConnect {\n  \"\"\"\n  The globally unique `ID` which identifies a single `player` to be connected.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"The fields on `player` to look up the row to delete.\"\"\"\ninput PlayerPlayerPkeyDelete {\n  id: Int!\n}\n\n\"\"\"The globally unique `ID` look up for the row to delete.\"\"\"\ninput PlayerNodeIdDelete {\n  \"\"\"\n  The globally unique `ID` which identifies a single `player` to be deleted.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"The fields on `player` to look up the row to update.\"\"\"\ninput PlayerOnPlayerForPlayerTeamFkeyUsingPlayerPkeyUpdate {\n  \"\"\"\n  An object where the defined keys will be set on the `player` being updated.\n  \"\"\"\n  playerPatch: updatePlayerOnPlayerForPlayerTeamFkeyPatch!\n  id: Int!\n}\n\n\"\"\"\nAn object where the defined keys will be set on the `player` being updated.\n\"\"\"\ninput updatePlayerOnPlayerForPlayerTeamFkeyPatch {\n  id: Int\n  name: String\n  teamToTeamCode: PlayerTeamFkeyInput\n}\n\n\"\"\"The globally unique `ID` look up for the row to update.\"\"\"\ninput TeamOnPlayerForPlayerTeamFkeyNodeIdUpdate {\n  \"\"\"\n  The globally unique `ID` which identifies a single `player` to be connected.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"\n  An object where the defined keys will be set on the `player` being updated.\n  \"\"\"\n  playerPatch: PlayerPatch!\n}\n\n\"\"\"\nRepresents an update to a `Player`. Fields that are set will be updated.\n\"\"\"\ninput PlayerPatch {\n  id: Int\n  teamCode: String\n  name: String\n  teamToTeamCode: PlayerTeamFkeyInput\n}\n\n\"\"\"The `player` to be created by this mutation.\"\"\"\ninput PlayerTeamFkeyPlayerCreateInput {\n  id: Int\n  teamCode: String\n  name: String!\n  teamToTeamCode: PlayerTeamFkeyInput\n}\n\n\"\"\"The fields on `team` to look up the row to update.\"\"\"\ninput TeamOnPlayerForPlayerTeamFkeyUsingTeamCodeKeyUpdate {\n  \"\"\"\n  An object where the defined keys will be set on the `team` being updated.\n  \"\"\"\n  teamPatch: updateTeamOnPlayerForPlayerTeamFkeyPatch!\n  code: String!\n}\n\n\"\"\"The globally unique `ID` look up for the row to update.\"\"\"\ninput PlayerOnPlayerForPlayerTeamFkeyNodeIdUpdate {\n  \"\"\"\n  The globally unique `ID` which identifies a single `team` to be connected.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"\n  An object where the defined keys will be set on the `team` being updated.\n  \"\"\"\n  teamPatch: TeamPatch!\n}\n\n\"\"\"Represents an update to a `Team`. Fields that are set will be updated.\"\"\"\ninput TeamPatch {\n  id: Int\n  code: String\n  name: String\n  playersUsingCode: PlayerTeamFkeyInverseInput\n}\n\n\"\"\"The `team` to be created by this mutation.\"\"\"\ninput PlayerTeamFkeyTeamCreateInput {\n  id: Int\n  code: String!\n  name: String!\n  playersUsingCode: PlayerTeamFkeyInverseInput\n}\n\n\"\"\"The output of our create `Team` mutation.\"\"\"\ntype CreateTeamPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` that was created by this mutation.\"\"\"\n  team: Team\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"An edge for our `Team`. May be used by Relay 1.\"\"\"\n  teamEdge(\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n  ): TeamsEdge\n}\n\n\"\"\"All input for the create `Team` mutation.\"\"\"\ninput CreateTeamInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` to be created by this mutation.\"\"\"\n  team: TeamInput!\n}\n\n\"\"\"An input for mutations affecting `Team`\"\"\"\ninput TeamInput {\n  id: Int\n  code: String!\n  name: String!\n  playersUsingCode: PlayerTeamFkeyInverseInput\n}\n\n\"\"\"The output of our update `Player` mutation.\"\"\"\ntype UpdatePlayerPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` that was updated by this mutation.\"\"\"\n  player: Player\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n\n  \"\"\"An edge for our `Player`. May be used by Relay 1.\"\"\"\n  playerEdge(\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n  ): PlayersEdge\n}\n\n\"\"\"All input for the `updatePlayer` mutation.\"\"\"\ninput UpdatePlayerInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Player` to be updated.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"\n  An object where the defined keys will be set on the `Player` being updated.\n  \"\"\"\n  playerPatch: PlayerPatch!\n}\n\n\"\"\"All input for the `updatePlayerById` mutation.\"\"\"\ninput UpdatePlayerByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  An object where the defined keys will be set on the `Player` being updated.\n  \"\"\"\n  playerPatch: PlayerPatch!\n  id: Int!\n}\n\n\"\"\"The output of our update `Team` mutation.\"\"\"\ntype UpdateTeamPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` that was updated by this mutation.\"\"\"\n  team: Team\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"An edge for our `Team`. May be used by Relay 1.\"\"\"\n  teamEdge(\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n  ): TeamsEdge\n}\n\n\"\"\"All input for the `updateTeam` mutation.\"\"\"\ninput UpdateTeamInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Team` to be updated.\n  \"\"\"\n  nodeId: ID!\n\n  \"\"\"\n  An object where the defined keys will be set on the `Team` being updated.\n  \"\"\"\n  teamPatch: TeamPatch!\n}\n\n\"\"\"All input for the `updateTeamById` mutation.\"\"\"\ninput UpdateTeamByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  An object where the defined keys will be set on the `Team` being updated.\n  \"\"\"\n  teamPatch: TeamPatch!\n  id: Int!\n}\n\n\"\"\"All input for the `updateTeamByCode` mutation.\"\"\"\ninput UpdateTeamByCodeInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  An object where the defined keys will be set on the `Team` being updated.\n  \"\"\"\n  teamPatch: TeamPatch!\n  code: String!\n}\n\n\"\"\"The output of our delete `Player` mutation.\"\"\"\ntype DeletePlayerPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Player` that was deleted by this mutation.\"\"\"\n  player: Player\n  deletedPlayerId: ID\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"Reads a single `Team` that is related to this `Player`.\"\"\"\n  teamByTeamCode: Team\n\n  \"\"\"An edge for our `Player`. May be used by Relay 1.\"\"\"\n  playerEdge(\n    \"\"\"The method to use when ordering `Player`.\"\"\"\n    orderBy: [PlayersOrderBy!] = [PRIMARY_KEY_ASC]\n  ): PlayersEdge\n}\n\n\"\"\"All input for the `deletePlayer` mutation.\"\"\"\ninput DeletePlayerInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Player` to be deleted.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"All input for the `deletePlayerById` mutation.\"\"\"\ninput DeletePlayerByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n  id: Int!\n}\n\n\"\"\"The output of our delete `Team` mutation.\"\"\"\ntype DeleteTeamPayload {\n  \"\"\"\n  The exact same `clientMutationId` that was provided in the mutation input,\n  unchanged and unused. May be used by a client to track mutations.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"The `Team` that was deleted by this mutation.\"\"\"\n  team: Team\n  deletedTeamId: ID\n\n  \"\"\"\n  Our root query field type. Allows us to run any query from our mutation payload.\n  \"\"\"\n  query: Query\n\n  \"\"\"An edge for our `Team`. May be used by Relay 1.\"\"\"\n  teamEdge(\n    \"\"\"The method to use when ordering `Team`.\"\"\"\n    orderBy: [TeamsOrderBy!] = [PRIMARY_KEY_ASC]\n  ): TeamsEdge\n}\n\n\"\"\"All input for the `deleteTeam` mutation.\"\"\"\ninput DeleteTeamInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n\n  \"\"\"\n  The globally unique `ID` which will identify a single `Team` to be deleted.\n  \"\"\"\n  nodeId: ID!\n}\n\n\"\"\"All input for the `deleteTeamById` mutation.\"\"\"\ninput DeleteTeamByIdInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n  id: Int!\n}\n\n\"\"\"All input for the `deleteTeamByCode` mutation.\"\"\"\ninput DeleteTeamByCodeInput {\n  \"\"\"\n  An arbitrary string value with no semantic meaning. Will be included in the\n  payload verbatim. May be used to track mutations by the client.\n  \"\"\"\n  clientMutationId: String\n  code: String!\n}\n"
+      },
+      "initialDbState": {
+        "player": [],
+        "team": [
+          {
+            "id": 1,
+            "code": "red",
+            "name": "Red team"
+          }
+        ]
+      },
+      "operations": [
+        {
+          "source": "mutation {\n          createPlayer(input: { player: {\n            name: \"p1\"\n            teamToTeamCode: { create: { code: \"blue\", name: \"Blue team\" } }\n          } }) { player { id name teamCode teamByTeamCode { code name } } }\n        }",
+          "variableValues": null,
+          "result": {
+            "data": {
+              "createPlayer": {
+                "player": {
+                  "id": 1,
+                  "name": "p1",
+                  "teamCode": null,
+                  "teamByTeamCode": null
+                }
+              }
+            }
+          },
+          "dbState": {
+            "player": [
+              {
+                "id": 1,
+                "team_code": null,
+                "name": "p1"
+              }
+            ],
+            "team": [
+              {
+                "id": 1,
+                "code": "red",
+                "name": "Red team"
+              },
+              {
+                "id": 2,
+                "code": "blue",
+                "name": "Blue team"
+              }
+            ]
+          }
+        },
+        {
+          "source": "mutation {\n          createPlayer(input: { player: {\n            name: \"p2\"\n            teamToTeamCode: { connectByCode: { code: \"red\" } }\n          } }) { player { id name teamCode teamByTeamCode { code name } } }\n        }",
+          "variableValues": null,
+          "result": {
+            "data": {
+              "createPlayer": {
+                "player": {
+                  "id": 2,
+                  "name": "p2",
+                  "teamCode": "red",
+                  "teamByTeamCode": {
+                    "code": "red",
+                    "name": "Red team"
+                  }
+                }
+              }
+            }
+          },
+          "dbState": {
+            "player": [
+              {
+                "id": 1,
+                "team_code": null,
+                "name": "p1"
+              },
+              {
+                "id": 2,
+                "team_code": "red",
+                "name": "p2"
+              }
+            ],
+            "team": [
+              {
+                "id": 1,
+                "code": "red",
+                "name": "Red team"
+              },
+              {
+                "id": 2,
+                "code": "blue",
+                "name": "Blue team"
+              }
+            ]
+          }
+        },
+        {
+          "source": "mutation {\n          createTeam(input: { team: {\n            code: \"green\", name: \"Green team\"\n            playersUsingCode: { create: [{ name: \"p3\" }] }\n          } }) { team { code playersByTeamCode { nodes { name teamCode } } } }\n        }",
+          "variableValues": null,
+          "result": {
+            "data": {
+              "createTeam": {
+                "team": {
+                  "code": "green",
+                  "playersByTeamCode": {
+                    "nodes": [
+                      {
+                        "name": "p3",
+                        "teamCode": "green"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "dbState": {
+            "player": [
+              {
+                "id": 1,
+                "team_code": null,
+                "name": "p1"
+              },
+              {
+                "id": 2,
+                "team_code": "red",
+                "name": "p2"
+              },
+              {
+                "id": 3,
+                "team_code": "green",
+                "name": "p3"
+              }
+            ],
+            "team": [
+              {
+                "id": 1,
+                "code": "red",
+                "name": "Red team"
+              },
+              {
+                "id": 2,
+                "code": "blue",
+                "name": "Blue team"
+              },
+              {
+                "id": 3,
+                "code": "green",
+                "name": "Green team"
               }
             ]
           }

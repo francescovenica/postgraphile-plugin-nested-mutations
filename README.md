@@ -5,6 +5,28 @@
 This plugin implements nested mutations based on both forward and reverse foreign
 key relationships in PostGraphile v4.  Nested mutations can be of infinite depth.
 
+## PostGraphile V5
+
+A V5 version ships in the same package, as `postgraphile-plugin-nested-mutations/v5`.
+With the V4 compatibility preset it generates the same schema and behaves the
+same as the V4 plugin. See [MIGRATION.md](MIGRATION.md) for configuration,
+the new `nestedMutation:*` behaviors and the known differences.
+
+```js
+// graphile.config.mjs
+import { PostGraphileAmberPreset } from 'postgraphile/presets/amber';
+import { makeV4Preset } from 'postgraphile/presets/v4';
+import { NestedMutationsPreset } from 'postgraphile-plugin-nested-mutations/v5';
+
+export default {
+  extends: [PostGraphileAmberPreset, makeV4Preset({}), NestedMutationsPreset],
+  schema: { nestedMutationsSimpleFieldNames: true },
+  // pgServices: [...]
+};
+```
+
+The rest of this README describes the V4 plugin; the GraphQL usage is the same in V5.
+
 ## Getting Started
 
 ### CLI

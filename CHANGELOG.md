@@ -1,5 +1,17 @@
 # Changes
 
+## Unreleased
+
+- Add a PostGraphile V5 version under `postgraphile-plugin-nested-mutations/v5`
+  (`NestedMutationsPreset`, `PgNestedMutationsPlugin`) with schema and
+  behaviour parity with V4. See MIGRATION.md.
+- V5: new per-relation behaviors `nestedMutation:connect`, `:insert`, `:update`,
+  `:delete` and `:deleteOthers`; new inflectors `nestedFieldName` and
+  `nestedTableFieldName`.
+- V4: `nestedMutationsList` is optional again (unset means no filtering).
+- Parity test harness (V4 recordings replayed against V5), transaction and
+  RLS tests, and CI for both versions.
+
 ## v1.1.0
 
 - Add support for --classic-ids.

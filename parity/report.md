@@ -13,6 +13,7 @@ None.
 Listed in `parity/known-differences.cjs`; the suite checks each one is
 exactly as documented.
 
+- cases-relations › foreign key referencing a non-primary-key unique column: A forward `create` through an FK that references a non-primary-key unique column left the FK NULL in V4 (it read the new row's primary key columns only). V5 sets the referenced value. Expected V4 results and database states are adjusted by exactly that from this operation on.
 - cases-smartTags › @omit update,delete on the foreign table: V4 still offered nested updateBy* on a table with `@omit update` (it built its own `ChildPatch`, and the update really ran). V5 respects the omit: without update permission on the foreign table there are no nested updateBy* fields.
 - cases-smartTags › @omit read on the foreign key column: With the FK column omitted for read/create/update, V4 still exposed nested connect/delete on the relation and re-added the omitted column to `ChildInput`/`ChildPatch`; a reverse connect then wrote the omitted column. V5 (V4 preset) treats a constraint over an unreadable column as unreadable, so the relation gets no nested fields.
 - cases-transactions › invalid nodeId and missing rows deep in the tree roll back (operation 3): V4 crashed with a TypeError ("Cannot read properties of undefined (reading 'id')") in its secondary nested-update path when a deep updateById matched no row. V5 raises the intended "unmatched update". Both roll back everything; the database state is compared as usual.
@@ -121,6 +122,7 @@ Counted across all fixtures.
 - (1×) Field 'parentByParentId' was added to object type 'CreateChildPayload'
 - (1×) Field 'parentByParentId' was added to object type 'DeleteChildPayload'
 - (1×) Field 'parentByParentId' was added to object type 'UpdateChildPayload'
+- (1×) Field 'PlayersConnection.edges' changed type from '[PlayersEdge!]!' to '[PlayersEdge]!'
 - (1×) Field 'profilesByAccountId' (deprecated) was removed from object type 'Account'
 - (1×) Field 'ProfilesConnection.edges' changed type from '[ProfilesEdge!]!' to '[ProfilesEdge]!'
 - (1×) Field 'Query.aByAId' has description 'Get a single `A`.'
@@ -139,11 +141,15 @@ Counted across all fixtures.
 - (1×) Field 'Query.parentByParentId' has description 'Get a single `Parent`.'
 - (1×) Field 'Query.parentByRowId' has description 'Get a single `Parent`.'
 - (1×) Field 'Query.parentByUuid' has description 'Get a single `Parent`.'
+- (1×) Field 'Query.playerById' has description 'Get a single `Player`.'
 - (1×) Field 'Query.profileByAccountId' has description 'Get a single `Profile`.'
 - (1×) Field 'Query.profileById' has description 'Get a single `Profile`.'
+- (1×) Field 'Query.teamByCode' has description 'Get a single `Team`.'
+- (1×) Field 'Query.teamById' has description 'Get a single `Team`.'
 - (1×) Field 'Query.user' has description 'Get a single `User`.'
 - (1×) Field 'Query.userByUsername' has description 'Get a single `User`.'
 - (1×) Field 'Query.userPrivate' has description 'Get a single `UserPrivate`.'
+- (1×) Field 'TeamsConnection.edges' changed type from '[TeamsEdge!]!' to '[TeamsEdge]!'
 - (1×) Field 'UserPrivatesConnection.edges' changed type from '[UserPrivatesEdge!]!' to '[UserPrivatesEdge]!'
 - (1×) Field 'UsersConnection.edges' changed type from '[UsersEdge!]!' to '[UsersEdge]!'
 - (1×) Input field 'ab' of type 'ABInput!' was added to input object type 'CreateAbInput'
@@ -158,7 +164,9 @@ Counted across all fixtures.
 - (1×) Type for argument 'orderBy' on field 'CreateCategoryPayload.categoryEdge' changed from '[CategoriesOrderBy!]' to '[CategoriesOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'CreateJobPayload.jobEdge' changed from '[JobsOrderBy!]' to '[JobsOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'CreateKidPayload.kidEdge' changed from '[KidsOrderBy!]' to '[KidsOrderBy!]!'
+- (1×) Type for argument 'orderBy' on field 'CreatePlayerPayload.playerEdge' changed from '[PlayersOrderBy!]' to '[PlayersOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'CreateProfilePayload.profileEdge' changed from '[ProfilesOrderBy!]' to '[ProfilesOrderBy!]!'
+- (1×) Type for argument 'orderBy' on field 'CreateTeamPayload.teamEdge' changed from '[TeamsOrderBy!]' to '[TeamsOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'CreateUserPayload.userEdge' changed from '[UsersOrderBy!]' to '[UsersOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'CreateUserPrivatePayload.userPrivateEdge' changed from '[UserPrivatesOrderBy!]' to '[UserPrivatesOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'DeleteAccountPayload.accountEdge' changed from '[AccountsOrderBy!]' to '[AccountsOrderBy!]!'
@@ -167,7 +175,9 @@ Counted across all fixtures.
 - (1×) Type for argument 'orderBy' on field 'DeleteCategoryPayload.categoryEdge' changed from '[CategoriesOrderBy!]' to '[CategoriesOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'DeleteJobPayload.jobEdge' changed from '[JobsOrderBy!]' to '[JobsOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'DeleteKidPayload.kidEdge' changed from '[KidsOrderBy!]' to '[KidsOrderBy!]!'
+- (1×) Type for argument 'orderBy' on field 'DeletePlayerPayload.playerEdge' changed from '[PlayersOrderBy!]' to '[PlayersOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'DeleteProfilePayload.profileEdge' changed from '[ProfilesOrderBy!]' to '[ProfilesOrderBy!]!'
+- (1×) Type for argument 'orderBy' on field 'DeleteTeamPayload.teamEdge' changed from '[TeamsOrderBy!]' to '[TeamsOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'DeleteUserPayload.userEdge' changed from '[UsersOrderBy!]' to '[UsersOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'DeleteUserPrivatePayload.userPrivateEdge' changed from '[UserPrivatesOrderBy!]' to '[UserPrivatesOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'UpdateAccountPayload.accountEdge' changed from '[AccountsOrderBy!]' to '[AccountsOrderBy!]!'
@@ -176,6 +186,8 @@ Counted across all fixtures.
 - (1×) Type for argument 'orderBy' on field 'UpdateCategoryPayload.categoryEdge' changed from '[CategoriesOrderBy!]' to '[CategoriesOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'UpdateJobPayload.jobEdge' changed from '[JobsOrderBy!]' to '[JobsOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'UpdateKidPayload.kidEdge' changed from '[KidsOrderBy!]' to '[KidsOrderBy!]!'
+- (1×) Type for argument 'orderBy' on field 'UpdatePlayerPayload.playerEdge' changed from '[PlayersOrderBy!]' to '[PlayersOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'UpdateProfilePayload.profileEdge' changed from '[ProfilesOrderBy!]' to '[ProfilesOrderBy!]!'
+- (1×) Type for argument 'orderBy' on field 'UpdateTeamPayload.teamEdge' changed from '[TeamsOrderBy!]' to '[TeamsOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'UpdateUserPayload.userEdge' changed from '[UsersOrderBy!]' to '[UsersOrderBy!]!'
 - (1×) Type for argument 'orderBy' on field 'UpdateUserPrivatePayload.userPrivateEdge' changed from '[UserPrivatesOrderBy!]' to '[UserPrivatesOrderBy!]!'

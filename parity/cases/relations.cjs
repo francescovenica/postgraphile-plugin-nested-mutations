@@ -251,6 +251,44 @@ module.exports = [
       },
       {
         source: `mutation {
+          updateAccountByEmail(input: {
+            email: "one@example.com"
+            clientMutationId: "by-unique"
+            accountPatch: { profileUsingId: { create: [{ bio: "second" }] } }
+          }) { clientMutationId ${accountSelection} }
+        }`,
+      },
+      {
+        source: `mutation {
+          updateAccount(input: {
+            nodeId: "${nodeId('accounts', 1)}"
+            clientMutationId: "by-node"
+            accountPatch: { email: "uno@example.com" }
+          }) { clientMutationId ${accountSelection} }
+        }`,
+      },
+      {
+        source: `mutation {
+          updateAccount(input: {
+            nodeId: "${nodeId('profiles', 1)}"
+            clientMutationId: "wrong-type"
+            accountPatch: { email: "nope@example.com" }
+          }) { clientMutationId ${accountSelection} }
+        }`,
+        expect: { errors: true, dbUnchanged: true },
+      },
+      {
+        source: `mutation {
+          updateAccountById(input: {
+            id: 99
+            clientMutationId: "no-row"
+            accountPatch: { email: "ghost@example.com" }
+          }) { clientMutationId ${accountSelection} }
+        }`,
+        expect: { errors: false, dbUnchanged: true },
+      },
+      {
+        source: `mutation {
           createProfile(input: { profile: {
             bio: "with new account"
             accountToAccountId: { create: { email: "five@example.com" } }
@@ -441,6 +479,49 @@ module.exports = [
           } }) { ${memberSelection} }
         }`,
         expect: { errors: true, dbUnchanged: true },
+      },
+    ],
+  },
+  {
+    name: 'foreign key referencing a non-primary-key unique column',
+    setup: `
+      create table p.team (
+        id serial primary key,
+        code text not null unique,
+        name text not null
+      );
+      create table p.player (
+        id serial primary key,
+        team_code text,
+        name text not null,
+        constraint player_team_fkey foreign key (team_code) references p.team (code)
+      );
+      insert into p.team (code, name) values ('red', 'Red team');
+    `,
+    operations: [
+      {
+        source: `mutation {
+          createPlayer(input: { player: {
+            name: "p1"
+            teamToTeamCode: { create: { code: "blue", name: "Blue team" } }
+          } }) { player { id name teamCode teamByTeamCode { code name } } }
+        }`,
+      },
+      {
+        source: `mutation {
+          createPlayer(input: { player: {
+            name: "p2"
+            teamToTeamCode: { connectByCode: { code: "red" } }
+          } }) { player { id name teamCode teamByTeamCode { code name } } }
+        }`,
+      },
+      {
+        source: `mutation {
+          createTeam(input: { team: {
+            code: "green", name: "Green team"
+            playersUsingCode: { create: [{ name: "p3" }] }
+          } }) { team { code playersByTeamCode { nodes { name teamCode } } } }
+        }`,
       },
     ],
   },
