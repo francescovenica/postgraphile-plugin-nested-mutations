@@ -13,6 +13,7 @@
  */
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { after, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -40,11 +41,24 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const goldenDir = join(root, "parity/golden");
+const require = createRequire(import.meta.url);
+const knownDifferences = require("../../parity/known-differences.cjs") as Array<{
+  file: string;
+  case: string;
+  reason: string;
+  operation?: number;
+  schemaChanges?: string[];
+  errorMessages?: string[];
+}>;
+const knownPluginDifferences: string[] = [];
 
 interface GoldenOperation {
   source: string;
   variableValues: Record<string, unknown> | null;
   pgSettings?: Record<string, string>;
+  expect?: { errors?: boolean; dbUnchanged?: boolean };
+  /** V4 left the transaction aborted; its COMMIT rolled the request back */
+  v4TransactionAborted?: boolean;
   result: any;
   dbState: Record<string, unknown[]>;
 }
@@ -176,15 +190,10 @@ for (const file of files) {
             printSorted(base.schema),
             printSorted(withPlugin.schema),
           );
-          assert.deepEqual(v5Delta, v4Delta, "plugin schema delta differs");
-          assert.deepEqual(
-            pluginFieldOrder(v5Delta, printSchema(withPlugin.schema)),
-            pluginFieldOrder(
-              v4Delta,
-              renameSDL(goldenCase.schemas.plugin, renames),
-            ),
-            "field order of plugin types/fields differs",
+          const known = knownDifferences.filter(
+            (k) => k.file === golden.file && k.case === goldenCase.name,
           );
+          const knownSchema = known.find((k) => k.schemaChanges);
 
           // Core renames (reported above) are applied to the V4 side so that
           // descriptions mentioning a renamed core type aren't flagged.
@@ -192,13 +201,41 @@ for (const file of files) {
             buildSchemaFromSDL(renameSDL(goldenCase.schemas.plugin, renames)),
             withPlugin.schema,
           );
+          const pluginChanges: string[] = [];
           for (const change of changes) {
-            const line = `${golden.file} › ${goldenCase.name}: ${change.message}`;
-            if (touchesPlugin(v4Delta, change.path)) {
-              pluginDifferences.push(line);
+            if (
+              touchesPlugin(v4Delta, change.path) ||
+              touchesPlugin(v5Delta, change.path)
+            ) {
+              pluginChanges.push(change.message);
             } else {
               coreDifferences.push(change.message);
             }
+          }
+
+          if (knownSchema) {
+            // Documented deliberate difference: it must be exactly this.
+            assert.deepEqual(
+              [...pluginChanges].sort(),
+              [...knownSchema.schemaChanges!].sort(),
+              "schema differs from V4 other than the documented way",
+            );
+            knownPluginDifferences.push(
+              `${golden.file} › ${goldenCase.name}: ${knownSchema.reason}`,
+            );
+          } else {
+            for (const message of pluginChanges) {
+              pluginDifferences.push(`${golden.file} › ${goldenCase.name}: ${message}`);
+            }
+            assert.deepEqual(v5Delta, v4Delta, "plugin schema delta differs");
+            assert.deepEqual(
+              pluginFieldOrder(v5Delta, printSchema(withPlugin.schema)),
+              pluginFieldOrder(
+                v4Delta,
+                renameSDL(goldenCase.schemas.plugin, renames),
+              ),
+              "field order of plugin types/fields differs",
+            );
           }
 
           // --- Behaviour parity ----------------------------------------------
@@ -208,6 +245,7 @@ for (const file of files) {
             normalizeDb(goldenCase.initialDbState),
             "initial database state differs",
           );
+          let before = await dumpSchema(query);
           for (const [i, op] of goldenCase.operations.entries()) {
             const result = await execute(
               withPlugin,
@@ -216,16 +254,44 @@ for (const file of files) {
               op.pgSettings,
             );
             await resetSettings(query, op.pgSettings);
-            assert.deepEqual(
-              normalizeResult(result),
-              normalizeResult(op.result),
-              `operation ${i} result differs`,
+            const knownResult = known.find(
+              (k) => k.operation === i && k.errorMessages,
             );
+            if (knownResult) {
+              const actual = normalizeResult(result);
+              assert.deepEqual(
+                actual.errors?.map((e: any) => e.message),
+                knownResult.errorMessages,
+                `operation ${i}: documented V5 error differs`,
+              );
+              assert.deepEqual(
+                actual.data,
+                normalizeResult(op.result).data,
+                `operation ${i} data differs`,
+              );
+              knownPluginDifferences.push(
+                `${golden.file} › ${goldenCase.name} (operation ${i}): ${knownResult.reason}`,
+              );
+            } else {
+              assert.deepEqual(
+                normalizeResult(result),
+                normalizeResult(op.result),
+                `operation ${i} result differs`,
+              );
+            }
+            const after = await dumpSchema(query);
             assert.deepEqual(
-              normalizeDb(await dumpSchema(query)),
+              normalizeDb(after),
               normalizeDb(op.dbState),
               `operation ${i} database state differs`,
             );
+            if (op.expect?.errors !== undefined) {
+              assert.equal(!!result.errors, op.expect.errors, `operation ${i} errors`);
+            }
+            if (op.expect?.dbUnchanged) {
+              assert.deepEqual(after, before, `operation ${i} changed the database`);
+            }
+            before = after;
           }
         });
       });
@@ -247,6 +313,15 @@ after(() => {
     "",
     pluginDifferences.length
       ? pluginDifferences.map((l) => `- ${l}`).join("\n")
+      : "None.",
+    "",
+    "## Documented, deliberate plugin differences",
+    "",
+    "Listed in `parity/known-differences.cjs`; the suite checks each one is",
+    "exactly as documented.",
+    "",
+    knownPluginDifferences.length
+      ? knownPluginDifferences.map((l) => `- ${l}`).join("\n")
       : "None.",
     "",
     "## Core V4 → V5 differences (not the plugin)",

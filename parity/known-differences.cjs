@@ -1,0 +1,63 @@
+/*
+ * Deliberate V4 -> V5 differences of the plugin itself. The V5 parity suite
+ * asserts that each case differs from V4 in exactly the listed way (and
+ * matches everywhere else), so these stay verified rather than ignored.
+ */
+module.exports = [
+  {
+    file: 'cases-smartTags',
+    case: '@omit update,delete on the foreign table',
+    reason:
+      'V4 still offered nested updateBy* on a table with `@omit update` (it built ' +
+      'its own `ChildPatch`, and the update really ran). V5 respects the omit: ' +
+      'without update permission on the foreign table there are no nested ' +
+      'updateBy* fields.',
+    schemaChanges: [
+      "Type 'ChildOnChildForChildParentFkeyUsingChildPkeyUpdate' was removed",
+      "Type 'updateChildOnChildForChildParentFkeyPatch' was removed",
+      "Type 'ParentOnChildForChildParentFkeyNodeIdUpdate' was removed",
+      "Type 'ChildPatch' was removed",
+      "Input field 'updateById' was removed from input object type 'ChildParentFkeyInverseInput'",
+      "Input field 'updateByNodeId' was removed from input object type 'ChildParentFkeyInverseInput'",
+    ],
+  },
+  {
+    file: 'cases-smartTags',
+    case: '@omit read on the foreign key column',
+    reason:
+      'With the FK column omitted for read/create/update, V4 still exposed nested ' +
+      'connect/delete on the relation and re-added the omitted column to ' +
+      '`ChildInput`/`ChildPatch`; a reverse connect then wrote the omitted ' +
+      'column. V5 (V4 preset) treats a constraint over an unreadable column as ' +
+      'unreadable, so the relation gets no nested fields.',
+    schemaChanges: [
+      "Type 'ChildParentFkeyInput' was removed",
+      "Type 'ParentParentPkeyConnect' was removed",
+      "Type 'ParentNodeIdConnect' was removed",
+      "Type 'ParentParentPkeyDelete' was removed",
+      "Type 'ParentNodeIdDelete' was removed",
+      "Type 'ChildParentFkeyInverseInput' was removed",
+      "Type 'ChildChildPkeyConnect' was removed",
+      "Type 'ChildNodeIdConnect' was removed",
+      "Type 'ChildChildPkeyDelete' was removed",
+      "Type 'ChildNodeIdDelete' was removed",
+      "Input field 'parentId' was removed from input object type 'ChildInput'",
+      "Input field 'parentToParentId' was removed from input object type 'ChildInput'",
+      "Input field 'childrenUsingId' was removed from input object type 'ParentInput'",
+      "Input field 'parentId' was removed from input object type 'ChildPatch'",
+      "Input field 'parentToParentId' was removed from input object type 'ChildPatch'",
+      "Input field 'childrenUsingId' was removed from input object type 'ParentPatch'",
+    ],
+  },
+  {
+    file: 'cases-transactions',
+    case: 'invalid nodeId and missing rows deep in the tree roll back',
+    operation: 3,
+    reason:
+      "V4 crashed with a TypeError (\"Cannot read properties of undefined (reading 'id')\") " +
+      'in its secondary nested-update path when a deep updateById matched no row. ' +
+      'V5 raises the intended "unmatched update". Both roll back everything; the ' +
+      'database state is compared as usual.',
+    errorMessages: ['unmatched update'],
+  },
+];
