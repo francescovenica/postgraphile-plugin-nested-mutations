@@ -1,11 +1,8 @@
-/* eslint-disable global-require */
-const core = require('./core');
+import * as core from './core.js';
 
 test(
   'prints a schema with the nested mutations plugin',
-  core.test(['p'], {
-    appendPlugins: [require('../../../index.js')],
-  }),
+  core.test(['p'], {}),
 );
 
 test(
@@ -14,6 +11,5 @@ test(
     graphileBuildOptions: {
       nestedMutationsSimpleFieldNames: true,
     },
-    appendPlugins: [require('../../../index.js')],
   }),
 );

@@ -1,9 +1,11 @@
-const { createPostGraphileSchema } = require('postgraphile-core');
-const printSchemaOrdered = require('../../printSchemaOrdered');
-const { withPgClient } = require('../../helpers');
+import {
+  buildSchema,
+  presetFromV4Options,
+  withRolledBackClient,
+} from '../../support/harness.ts';
 
-exports.test = (schemas, options, setup) => () =>
-  withPgClient(async (client) => {
+export const test = (schemas, options, setup) => () =>
+  withRolledBackClient(async (client) => {
     if (setup) {
       if (typeof setup === 'function') {
         await setup(client);
@@ -11,6 +13,10 @@ exports.test = (schemas, options, setup) => () =>
         await client.query(setup);
       }
     }
-    const schema = await createPostGraphileSchema(client, schemas, options);
-    expect(printSchemaOrdered(schema)).toMatchSnapshot();
+    const { schema } = await buildSchema(
+      client,
+      presetFromV4Options(options, { plugin: true }),
+      schemas,
+    );
+    expect(schema).toMatchSnapshot();
   });

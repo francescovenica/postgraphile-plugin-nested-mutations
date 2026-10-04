@@ -1,5 +1,25 @@
 # Changes
 
+## v2.0.0
+
+- **Breaking:** PostGraphile V5 only. The package is ESM and exports
+  `PgNestedMutationsPreset` (add it to your preset's `extends`). The
+  PostGraphile V4 plugin stays in v1.x. See MIGRATION.md.
+- With the V4 compatibility preset the schema and behaviour match v1.x;
+  deliberate differences are documented in MIGRATION.md and
+  parity/known-differences.cjs.
+- The preset is split into one plugin per concern:
+  `PgNestedMutationsInflectionPlugin`, `…GatherPlugin`, `…BehaviorPlugin`,
+  `…TypesPlugin`, `…FieldsPlugin` and `…PlansPlugin`.
+- New per-relation behaviors `nestedMutation:connect`, `:insert`, `:update`,
+  `:delete` and `:deleteOthers`; new inflectors `nestedFieldName` and
+  `nestedTableFieldName`.
+- `nestedMutationsList` is optional (unset means no filtering).
+- `@omit` is no longer parsed by the plugin; the V4 preset translates it.
+  A constraint with `@omit update` now hides nested `updateBy*` fields.
+- Tests run on Vitest: the v1.x integration tests run against the V5 plugin,
+  plus replays of v1.x recordings, transaction and RLS tests.
+
 ## v1.1.0
 
 - Add support for --classic-ids.

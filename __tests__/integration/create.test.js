@@ -1,5 +1,4 @@
-const { graphql } = require('graphql');
-const { withSchema } = require('../helpers');
+import { graphql, withSchema } from '../helpers.js';
 
 test(
   'table with no relations is not affected by plugin',
