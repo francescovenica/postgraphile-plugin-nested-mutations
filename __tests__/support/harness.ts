@@ -22,7 +22,7 @@ const extraPresets: Record<string, GraphileConfig.Preset> = {
 };
 
 const require = createRequire(import.meta.url);
-const { dumpSchema, resetSettings } = require("../../../parity/dbstate.cjs") as {
+const { dumpSchema, resetSettings } = require("../../parity/dbstate.cjs") as {
   dumpSchema: (
     query: (text: string, values?: unknown[]) => Promise<{ rows: any[] }>,
     schema?: string,

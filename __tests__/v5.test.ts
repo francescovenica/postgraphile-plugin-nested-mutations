@@ -3,7 +3,7 @@
  * `preset.schema`, and use without the V4 compatibility preset.
  */
 import assert from "node:assert/strict";
-import { test } from "node:test";
+import { test } from "vitest";
 
 import type { GraphQLInputObjectType } from "postgraphile/graphql";
 import { PostGraphileAmberPreset } from "postgraphile/presets/amber";

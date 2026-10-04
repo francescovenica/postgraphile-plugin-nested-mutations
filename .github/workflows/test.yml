@@ -26,20 +26,11 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            v5/package-lock.json
       - run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - run: npm ci
-      - run: npm ci --prefix v5
-      - run: npm run lint
-      - run: npm run typecheck:v5
-      - run: npm run build:v5
-      # V4 suite; also re-records the golden files the V5 suite compares against
-      - name: test:v4
-        run: PARITY_RECORD=1 npm run test:v4
-      - name: test:v5
-        run: npm run test:v5
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
       - uses: actions/upload-artifact@v4
         if: always()
         with:

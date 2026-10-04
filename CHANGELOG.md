@@ -1,24 +1,24 @@
 # Changes
 
-## Unreleased
+## v2.0.0
 
-- Add a PostGraphile V5 version under `postgraphile-plugin-nested-mutations/v5`
-  (`PgNestedMutationsPreset`) with schema and
-  behaviour parity with V4. See MIGRATION.md.
-- V5: new per-relation behaviors `nestedMutation:connect`, `:insert`, `:update`,
+- **Breaking:** PostGraphile V5 only. The package is ESM and exports
+  `PgNestedMutationsPreset` (add it to your preset's `extends`). The
+  PostGraphile V4 plugin stays in v1.x. See MIGRATION.md.
+- With the V4 compatibility preset the schema and behaviour match v1.x;
+  deliberate differences are documented in MIGRATION.md and
+  parity/known-differences.cjs.
+- The preset is split into one plugin per concern:
+  `PgNestedMutationsInflectionPlugin`, `…GatherPlugin`, `…BehaviorPlugin`,
+  `…TypesPlugin`, `…FieldsPlugin` and `…PlansPlugin`.
+- New per-relation behaviors `nestedMutation:connect`, `:insert`, `:update`,
   `:delete` and `:deleteOthers`; new inflectors `nestedFieldName` and
   `nestedTableFieldName`.
-- V4: `nestedMutationsList` is optional again (unset means no filtering).
-- V5: the preset is split into one plugin per concern, following the V5
-  community plugins: `PgNestedMutationsInflectionPlugin`, `…GatherPlugin`,
-  `…BehaviorPlugin`, `…TypesPlugin`, `…FieldsPlugin` and `…PlansPlugin`.
-  `NestedMutationsPreset` and `PgNestedMutationsPlugin` are renamed/removed.
-- V5: the options are also typed on `makeV4Preset({ graphileBuildOptions })`.
-- V5: `@omit` is no longer parsed by the plugin; the V4 preset translates it.
-  A constraint with `@omit update` now hides nested `updateBy*` fields, which
-  differs from V4 (documented in parity/known-differences.cjs).
-- Parity test harness (V4 recordings replayed against V5), transaction and
-  RLS tests, and CI for both versions.
+- `nestedMutationsList` is optional (unset means no filtering).
+- `@omit` is no longer parsed by the plugin; the V4 preset translates it.
+  A constraint with `@omit update` now hides nested `updateBy*` fields.
+- Tests run on Vitest: the v1.x integration tests run against the V5 plugin,
+  plus replays of v1.x recordings, transaction and RLS tests.
 
 ## v1.1.0
 

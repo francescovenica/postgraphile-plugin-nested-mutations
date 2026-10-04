@@ -1,8 +1,8 @@
 /*
  * Fixtures with `uuid_generate_v4()` defaults produce different values on
  * every run. Replace UUIDs (also inside node IDs) with a placeholder, and
- * sort arrays that contained one so row order by UUID doesn't matter. Used
- * when recording golden files (so they are stable) and when comparing.
+ * sort arrays that contained one so row order by UUID doesn't matter.
+ * Applied before comparing with the golden recordings.
  */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -46,6 +46,4 @@ function normalizeRandom(value) {
   return { value, random: false };
 }
 
-const stable = (value) => normalizeRandom(value).value;
-
-module.exports = { normalizeRandom, stable };
+module.exports = { normalizeRandom };

@@ -12,7 +12,7 @@ function normalizeMessage(message: string) {
 }
 
 const require = createRequire(import.meta.url);
-export const { normalizeRandom } = require("../../../parity/normalize.cjs") as {
+export const { normalizeRandom } = require("../../parity/normalize.cjs") as {
   normalizeRandom: (value: any) => { value: any; random: boolean };
 };
 

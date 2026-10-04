@@ -1,154 +1,40 @@
-/* eslint-disable no-param-reassign */
-const pg = require('pg');
-const { readFile } = require('fs');
-const pgConnectionString = require('pg-connection-string');
-const { createPostGraphileSchema } = require('postgraphile-core');
+/*
+ * Helpers for the integration tests. Each test runs inside a transaction
+ * that is rolled back, against a schema built with PostGraphile V5, the V4
+ * compatibility preset (configured from the test's V4-style `options`) and
+ * this plugin.
+ */
+import {
+  buildSchema,
+  execute,
+  presetFromV4Options,
+  withRolledBackClient,
+} from './support/harness.ts';
 
-function readFilePromise(filename, encoding) {
-  return new Promise((resolve, reject) => {
-    readFile(filename, encoding, (err, res) => {
-      if (err) reject(err);
-      else resolve(res);
+const builtSchemas = new WeakMap();
+
+export const withSchema =
+  ({ setup, test, options = {} }) =>
+  () =>
+    withRolledBackClient(async (client) => {
+      if (setup) {
+        if (typeof setup === 'function') {
+          await setup(client);
+        } else {
+          await client.query(setup);
+        }
+      }
+      const built = await buildSchema(
+        client,
+        presetFromV4Options(options, { plugin: true }),
+      );
+      builtSchemas.set(built.schema, built);
+      return test({ schema: built.schema, pgClient: client });
     });
-  });
-}
 
-const kitchenSinkData = () => readFilePromise(`${__dirname}/data.sql`, 'utf8');
-
-const withPgClient = async (url, fn) => {
-  if (!fn) {
-    fn = url;
-    url = process.env.TEST_DATABASE_URL;
-  }
-  const pgPool = new pg.Pool(pgConnectionString.parse(url));
-  let client;
-  try {
-    client = await pgPool.connect();
-    await client.query('begin');
-    await client.query('set local timezone to \'+04:00\'');
-    const result = await fn(client);
-    await client.query('rollback');
-    return result;
-  } finally {
-    try {
-      await client.release();
-    } catch (e) {
-      console.error('Error releasing pgClient', e);
-      throw e;
-    }
-    await pgPool.end();
-  }
-};
-
-const withDbFromUrl = async (url, fn) => withPgClient(url, async (client) => {
-  try {
-    await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE;');
-    return fn(client);
-  } finally {
-    await client.query('COMMIT;');
-  }
-});
-
-
-const withRootDb = fn => withDbFromUrl(process.env.TEST_DATABASE_URL, fn);
-
-let prepopulatedDBKeepalive;
-
-const populateDatabase = async (client) => {
-  await client.query(await readFilePromise(`${__dirname}/data.sql`, 'utf8'));
-  return {};
-};
-
-const withPrepopulatedDb = async (fn) => {
-  if (!prepopulatedDBKeepalive) {
-    throw new Error('You must call setup and teardown to use this');
-  }
-  const { client, vars } = prepopulatedDBKeepalive;
-  if (!vars) {
-    throw new Error('No prepopulated vars');
-  }
-  let err;
-  try {
-    await fn(client, vars);
-  } catch (e) {
-    err = e;
-  }
-  try {
-    await client.query('ROLLBACK TO SAVEPOINT pristine;');
-  } catch (e) {
-    err = err || e;
-    console.error('ERROR ROLLING BACK', e.message); // eslint-disable-line no-console
-  }
-  if (err) {
-    throw err;
-  }
-};
-
-withPrepopulatedDb.setup = async () => {
-  if (prepopulatedDBKeepalive) {
-    throw new Error("There's already a prepopulated DB running");
-  }
-  let res;
-  let rej;
-  prepopulatedDBKeepalive = new Promise((resolve, reject) => {
-    res = resolve;
-    rej = reject;
-  });
-  prepopulatedDBKeepalive.resolve = res;
-  prepopulatedDBKeepalive.reject = rej;
-  withRootDb(async (client) => {
-    prepopulatedDBKeepalive.client = client;
-    try {
-      prepopulatedDBKeepalive.vars = await populateDatabase(client);
-    } catch (e) {
-      console.error('FAILED TO PREPOPULATE DB!', e.message); // eslint-disable-line no-console
-      throw e;
-    }
-    await client.query('SAVEPOINT pristine;');
-    return prepopulatedDBKeepalive;
-  });
-};
-
-withPrepopulatedDb.teardown = () => {
-  if (!prepopulatedDBKeepalive) {
-    throw new Error('Cannot tear down null!');
-  }
-  prepopulatedDBKeepalive.resolve(); // Release DB transaction
-  prepopulatedDBKeepalive = null;
-};
-
-const withSchema = ({
-  setup,
-  test,
-  options = {},
-}) => () => withPgClient(async (client) => {
-  if (setup) {
-    if (typeof setup === 'function') {
-      await setup(client);
-    } else {
-      await client.query(setup);
-    }
-  }
-
-  const schemaOptions = Object.assign(
-    {
-      appendPlugins: [require('../index.js')],
-      showErrorStack: true,
-    },
-    options,
-  );
-
-  const schema = await createPostGraphileSchema(client, ['p'], schemaOptions);
-  return test({
-    schema,
-    pgClient: client,
-  });
-});
-
-const loadQuery = fn => readFilePromise(`${__dirname}/fixtures/queries/${fn}`, 'utf8');
-
-exports.withRootDb = withRootDb;
-exports.withPrepopulatedDb = withPrepopulatedDb;
-exports.withPgClient = withPgClient;
-exports.withSchema = withSchema;
-exports.loadQuery = loadQuery;
+/**
+ * Same call signature as graphql-js's positional `graphql()`. The context is
+ * ignored: the schema already runs its queries through the test's client.
+ */
+export const graphql = (schema, source, _rootValue, _context, variableValues) =>
+  execute(builtSchemas.get(schema), source, variableValues);

@@ -1,5 +1,5 @@
 /*
- * Shared by the V4 and V5 transaction tests. Unlike the parity cases these
+ * Used by the transaction tests. Unlike the parity cases these
  * run against committed data through a real pool (as a server would), so
  * every statement can be traced back to the backend that ran it.
  */

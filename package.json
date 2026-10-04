@@ -1,13 +1,14 @@
 {
   "name": "postgraphile-plugin-nested-mutations",
-  "version": "1.1.0",
-  "description": "Nested mutations plugin for PostGraphile",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Nested mutations plugin for PostGraphile V5",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
-    ".": "./index.js",
-    "./v5": {
-      "types": "./v5/dist/index.d.ts",
-      "default": "./v5/dist/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -21,61 +22,27 @@
     "url": "https://github.com/mlipscombe/postgraphile-plugin-nested-mutations/issues"
   },
   "scripts": {
-    "test": "scripts/test jest -i",
-    "test:v4": "scripts/test jest -i",
-    "test:v5": "scripts/test npm --prefix v5 test",
-    "test:parity": "PARITY_RECORD=1 scripts/test jest -i && scripts/test npm --prefix v5 test",
-    "build:v5": "npm --prefix v5 run build",
-    "prepack": "npm run build:v5",
-    "lint": "eslint index.js src/**/*.js",
-    "typecheck:v5": "npm --prefix v5 run typecheck"
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "scripts/test vitest run",
+    "prepack": "npm run build"
   },
   "peerDependencies": {
-    "graphile-build-pg": "^4.14.1",
-    "postgraphile-core": "^4.2.0",
     "postgraphile": "^5.0.0"
   },
-  "peerDependenciesMeta": {
-    "graphile-build-pg": {
-      "optional": true
-    },
-    "postgraphile-core": {
-      "optional": true
-    },
-    "postgraphile": {
-      "optional": true
-    }
-  },
   "devDependencies": {
-    "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
-    "eslint": "^7.22.0",
-    "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-config-prettier": "^8.1.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-prettier": "^3.3.1",
-    "graphile-build-pg": "^4.14.1",
-    "graphql": "^15.5.0",
-    "jest": "^26.6.3",
-    "jest-junit": "^12.0.0",
-    "pg": "^8.5.1",
-    "postgraphile": "^4.14.1",
-    "postgraphile-core": "^4.14.1",
-    "prettier": "^2.2.1"
+    "@graphile/simplify-inflection": "^9.0.0",
+    "@graphql-inspector/core": "^6.0.0",
+    "pg": "^8.23.1",
+    "postgraphile": "5.1.5",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.3"
   },
-  "jest": {
-    "testRegex": "__tests__/.*\\.test\\.js$",
-    "setupFilesAfterEnv": [
-      "<rootDir>/__tests__/parity/recorder.js"
-    ],
-    "collectCoverageFrom": [
-      "src/*.js",
-      "index.js"
-    ]
+  "engines": {
+    "node": ">=22.18"
   },
   "files": [
-    "src",
-    "index.js",
-    "v5/dist",
+    "dist",
     "MIGRATION.md"
   ],
   "prettier": {
@@ -83,56 +50,5 @@
     "semi": true,
     "singleQuote": true,
     "arrowParens": "always"
-  },
-  "eslintConfig": {
-    "extends": [
-      "airbnb-base",
-      "prettier"
-    ],
-    "plugins": [
-      "prettier"
-    ],
-    "env": {
-      "jest": true
-    },
-    "globals": {
-      "expect": false,
-      "jasmine": false
-    },
-    "rules": {
-      "prettier/prettier": "error",
-      "import/no-unresolved": 0,
-      "import/no-extraneous-dependencies": 0,
-      "import/extensions": 0,
-      "import/prefer-default-export": 0,
-      "prefer-object-spread": 0,
-      "max-len": 0,
-      "symbol-description": 0,
-      "no-nested-ternary": 0,
-      "no-alert": 0,
-      "no-console": 0,
-      "no-plusplus": 0,
-      "no-restricted-globals": 0,
-      "no-underscore-dangle": [
-        "error",
-        {
-          "allow": [
-            "_fields"
-          ]
-        }
-      ],
-      "no-return-assign": [
-        "error",
-        "except-parens"
-      ],
-      "class-methods-use-this": 0,
-      "prefer-destructuring": [
-        "error",
-        {
-          "object": true,
-          "array": false
-        }
-      ]
-    }
   }
 }

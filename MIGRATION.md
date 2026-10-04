@@ -1,8 +1,7 @@
 # Migrating from PostGraphile V4 to V5
 
-The V5 version of this plugin ships in the same package, under the
-`postgraphile-plugin-nested-mutations/v5` entry point. The V4 entry point
-(`postgraphile-plugin-nested-mutations`) is unchanged.
+Version 2 of this package supports PostGraphile V5 only. The PostGraphile V4
+plugin lives on in version 1.x.
 
 With PostGraphile V5 and its V4 compatibility preset (`makeV4Preset`), the V5
 plugin produces the same nested-mutation schema as V4: the same type names,
@@ -11,11 +10,11 @@ It also behaves the same at runtime, so client operations don't need to
 change. Differences are listed under [Known differences](#known-differences).
 Each one is checked by the test suite.
 
-Requirements: `postgraphile@^5`, Node.js 22.18+ (the V5 build is ESM).
+Requirements: `postgraphile@^5`, Node.js 22.18+ (the package is ESM).
 
 ## Configuration
 
-### V4
+### V4 (version 1.x)
 
 ```js
 const PostGraphileNestedMutations = require('postgraphile-plugin-nested-mutations');
@@ -31,14 +30,14 @@ app.use(
 );
 ```
 
-### V5
+### V5 (version 2)
 
 ```js
 // graphile.config.mjs
 import { PostGraphileAmberPreset } from 'postgraphile/presets/amber';
 import { makeV4Preset } from 'postgraphile/presets/v4';
 import { makePgService } from 'postgraphile/adaptors/pg';
-import { PgNestedMutationsPreset } from 'postgraphile-plugin-nested-mutations/v5';
+import { PgNestedMutationsPreset } from 'postgraphile-plugin-nested-mutations';
 
 export default {
   extends: [
@@ -332,23 +331,23 @@ changes. They are V5 core changes, even with the V4 preset:
 ## Tests and the parity harness
 
 ```sh
-npm ci && npm ci --prefix v5
-TEST_DATABASE_URL=postgres://… npm run test:v4      # V4 suite (unchanged tests + parity fixtures)
-TEST_DATABASE_URL=postgres://… npm run test:v5      # V5 suite
-TEST_DATABASE_URL=postgres://… npm run test:parity  # re-record V4, then compare V5
+npm ci
+TEST_DATABASE_URL=postgres://… npm test
 ```
 
-- `npm run test:v4` with `PARITY_RECORD=1` records every V4 test into
-  `parity/golden`: the setup, options, schema with and without the plugin,
-  and each operation's result plus a dump of every table afterwards. The
-  fixtures in `parity/cases` (composite keys, one-to-one, self-reference,
-  multiple FKs, smart tags, `@omit`, transactions, RLS) are recorded the same
-  way.
-- `npm run test:v5` replays all of them on V5. It compares the plugin's schema
-  delta (and field order), each result, and the database state. It also
+- `__tests__/integration` holds the V4 plugin's integration tests, unchanged
+  apart from their helpers, which now build the schema with V5, the V4 preset
+  and this plugin. Their schema snapshots are V5 schemas.
+- `parity/golden` holds recordings made with the V4 plugin: the setup,
+  options, schema with and without the plugin, and each operation's result
+  plus a dump of every table afterwards (composite keys, one-to-one,
+  self-reference, multiple FKs, smart tags, `@omit`, transactions, RLS).
+  `__tests__/parity.test.ts` replays all of them. It compares the plugin's
+  schema delta (and field order), each result, and the database state. It also
   writes `parity/report.md` from a graphql-inspector diff of the full schemas.
-- `transaction.test.*` (both versions) run a 3-level nested mutation with
-  `pgSettings` through each version's real request handling on a pool. They
-  capture every statement with its backend PID and check: one backend, one
+- `__tests__/transaction.test.ts` runs a 3-level nested mutation with
+  `pgSettings` through V5's real request handling on a pool. It captures
+  every statement with its backend PID and checks: one backend, one
   BEGIN … COMMIT/ROLLBACK, `set_config` inside it, nothing left behind on
-  failure, and multiple root fields.
+  failure, and multiple root fields; outcomes are compared with the V4
+  recording in `parity/golden/transactions-v4.json`.

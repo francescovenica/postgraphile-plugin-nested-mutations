@@ -1,5 +1,4 @@
-const { graphql } = require('graphql');
-const { withSchema } = require('../helpers');
+import { graphql, withSchema } from '../helpers.js';
 
 test(
   'forward nested mutation during update',
@@ -996,10 +995,7 @@ test(
         E'@foreignFieldName private\n@fieldName user'; -- User { private }
     `,
     options: {
-      appendPlugins: [
-        require('../../index.js'),
-        require('@graphile-contrib/pg-simplify-inflector'),
-      ],
+      extraPlugins: ['pg-simplify-inflector'],
       simpleCollections: 'both',
       legacyRelations: 'omit',
       pgShortPk: true,

@@ -1,7 +1,7 @@
 /*
- * Shared by the V4 recorder and the V5 comparator: dumps every table in a
- * schema as JSON (rows sorted by their JSON text) so database state after a
- * GraphQL operation can be compared between versions.
+ * Dumps every table in a schema as JSON (rows sorted by their JSON text) so
+ * database state after a GraphQL operation can be compared with the golden
+ * recordings.
  *
  * `query(text, values)` must resolve to `{ rows }` (node-postgres style).
  */

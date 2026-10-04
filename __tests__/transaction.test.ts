@@ -1,13 +1,13 @@
 /*
  * V5 transaction semantics on a real pool with pgSettings (role + JWT
- * claims), compared with the V4 outcomes recorded by
- * __tests__/parity/transaction.test.js.
+ * claims), compared with the outcomes recorded from the V4 plugin in
+ * parity/golden/transactions-v4.json.
  */
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
-import { after, before, test } from "node:test";
+import { afterAll as after, beforeAll as before, test } from "vitest";
 import { fileURLToPath } from "node:url";
 
 import pg from "pg";
@@ -22,14 +22,14 @@ import { TEST_DATABASE_URL } from "./support/harness.ts";
 import { normalizeResult } from "./support/normalize.ts";
 
 const require = createRequire(import.meta.url);
-const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const {
   fixtureSql,
   pgSettings,
   operations,
   captureStatements,
   transactionOf,
-} = require("../../parity/transactionFixture.cjs");
+} = require("../parity/transactionFixture.cjs");
 
 const SCHEMA = "nested_tx_v5";
 const v4OutcomesPath = join(root, "parity/golden/transactions-v4.json");
@@ -93,7 +93,7 @@ async function run(source: string) {
 }
 
 function sameAsV4(name: string, outcome: any) {
-  assert.ok(v4Outcomes, "run the V4 suite with PARITY_RECORD=1 first");
+  assert.ok(v4Outcomes, "parity/golden/transactions-v4.json is missing");
   const v4 = v4Outcomes[name];
   assert.deepEqual(normalizeResult(outcome.result), normalizeResult(v4.result));
   assert.deepEqual(outcome.before, v4.before);
