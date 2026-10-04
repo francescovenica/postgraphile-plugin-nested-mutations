@@ -14,7 +14,7 @@ import { makeV4Preset } from "postgraphile/presets/v4";
 
 import { PgSimplifyInflectionPreset } from "@graphile/simplify-inflection";
 
-import { NestedMutationsPreset } from "../../src/index.ts";
+import { PgNestedMutationsPreset } from "../../src/index.ts";
 
 /** V4 plugins used by recorded fixtures -> their V5 equivalents */
 const extraPresets: Record<string, GraphileConfig.Preset> = {
@@ -79,7 +79,7 @@ export function presetFromV4Options(
         if (!preset) throw new Error(`No V5 equivalent for ${name}`);
         return preset;
       }),
-      ...(plugin ? [NestedMutationsPreset] : []),
+      ...(plugin ? [PgNestedMutationsPreset] : []),
     ],
   };
 }

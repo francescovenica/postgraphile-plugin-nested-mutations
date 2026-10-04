@@ -1,9 +1,22 @@
 import "./interfaces.ts";
 
-import { PgNestedMutationsPlugin } from "./plugin.ts";
+import { PgNestedMutationsBehaviorPlugin } from "./PgNestedMutationsBehaviorPlugin.ts";
+import { PgNestedMutationsFieldsPlugin } from "./PgNestedMutationsFieldsPlugin.ts";
+import { PgNestedMutationsGatherPlugin } from "./PgNestedMutationsGatherPlugin.ts";
+import { PgNestedMutationsInflectionPlugin } from "./PgNestedMutationsInflectionPlugin.ts";
+import { PgNestedMutationsPlansPlugin } from "./PgNestedMutationsPlansPlugin.ts";
+import { PgNestedMutationsTypesPlugin } from "./PgNestedMutationsTypesPlugin.ts";
 
 export type * from "./interfaces.ts";
-export { PgNestedMutationsPlugin } from "./plugin.ts";
+export {
+  nestedBehavior,
+  PgNestedMutationsBehaviorPlugin,
+} from "./PgNestedMutationsBehaviorPlugin.ts";
+export { PgNestedMutationsFieldsPlugin } from "./PgNestedMutationsFieldsPlugin.ts";
+export { PgNestedMutationsGatherPlugin } from "./PgNestedMutationsGatherPlugin.ts";
+export { PgNestedMutationsInflectionPlugin } from "./PgNestedMutationsInflectionPlugin.ts";
+export { PgNestedMutationsPlansPlugin } from "./PgNestedMutationsPlansPlugin.ts";
+export { PgNestedMutationsTypesPlugin } from "./PgNestedMutationsTypesPlugin.ts";
 export {
   NestedMutationEngine,
   PgNestedInsertStep,
@@ -17,13 +30,20 @@ export { version } from "./version.ts";
  *
  * ```js
  * const preset = {
- *   extends: [PostGraphileAmberPreset, makeV4Preset(), NestedMutationsPreset],
+ *   extends: [PostGraphileAmberPreset, makeV4Preset(), PgNestedMutationsPreset],
  *   schema: { nestedMutationsSimpleFieldNames: true },
  * };
  * ```
  */
-export const NestedMutationsPreset: GraphileConfig.Preset = {
-  plugins: [PgNestedMutationsPlugin],
+export const PgNestedMutationsPreset: GraphileConfig.Preset = {
+  plugins: [
+    PgNestedMutationsInflectionPlugin,
+    PgNestedMutationsGatherPlugin,
+    PgNestedMutationsBehaviorPlugin,
+    PgNestedMutationsTypesPlugin,
+    PgNestedMutationsFieldsPlugin,
+    PgNestedMutationsPlansPlugin,
+  ],
 };
 
-export default NestedMutationsPreset;
+export default PgNestedMutationsPreset;

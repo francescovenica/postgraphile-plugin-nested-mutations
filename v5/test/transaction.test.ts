@@ -17,7 +17,7 @@ import { grafast } from "postgraphile/grafast";
 import { PostGraphileAmberPreset } from "postgraphile/presets/amber";
 import { makeV4Preset } from "postgraphile/presets/v4";
 
-import { NestedMutationsPreset } from "../src/index.ts";
+import { PgNestedMutationsPreset } from "../src/index.ts";
 import { TEST_DATABASE_URL } from "./support/harness.ts";
 import { normalizeResult } from "./support/normalize.ts";
 
@@ -71,7 +71,7 @@ async function run(source: string) {
     pgSettings: (() => pgSettings) as any,
   });
   const { schema, resolvedPreset } = await makeSchema({
-    extends: [PostGraphileAmberPreset, makeV4Preset({}), NestedMutationsPreset],
+    extends: [PostGraphileAmberPreset, makeV4Preset({}), PgNestedMutationsPreset],
     pgServices: [pgService],
   });
   const beforeCounts = await counts();

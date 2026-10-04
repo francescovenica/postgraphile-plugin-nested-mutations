@@ -1,20 +1,14 @@
 import type { PgCodecRelation } from "postgraphile/@dataplan/pg";
-import { object } from "postgraphile/grafast";
-import type {
-  GraphQLInputFieldConfigMap,
-  GraphQLInputType,
-} from "postgraphile/graphql";
+import type { GraphQLInputFieldConfigMap } from "postgraphile/graphql";
 
-import { inflectors } from "./inflection.ts";
 import type {
   NestedKeyField,
   NestedMutationsState,
   NestedRelationField,
   NestedTable,
-  NestedUpdaterField,
-  PgTableResource,
 } from "./interfaces.ts";
 import { buildNestedState } from "./metadata.ts";
+import { nestedBehavior } from "./PgNestedMutationsBehaviorPlugin.ts";
 import {
   applyDeleteOthers,
   applyNodeId,
@@ -22,84 +16,17 @@ import {
   makeApplyCreateField,
   makeApplyKeyAttribute,
   makeApplyLookupField,
-  makeApplyNestedField,
-  PgNestedInsertStep,
-  PgNestedUpdateStep,
 } from "./runtime.ts";
 import { version } from "./version.ts";
 
-/** V4 `@omit` parsing (only what we need: does it cover `update`?) */
-function v4OmitIncludes(omit: unknown, permission: string): boolean {
-  if (!omit) return false;
-  const list = Array.isArray(omit) ? omit : [omit];
-  const letters: Record<string, string> = {
-    C: "create",
-    R: "read",
-    U: "update",
-    D: "delete",
-  };
-  return list.some((entry) => {
-    if (entry === true || entry === "*") return true;
-    if (typeof entry !== "string") return false;
-    const parts =
-      entry[0] === ":"
-        ? entry
-            .slice(1)
-            .split("")
-            .map((l) => letters[l])
-        : entry.split(",").map((p) => p.trim());
-    return parts.includes(permission);
-  });
-}
-
-/**
- * The V4 preset translates `@omit update` on a constraint into `-update`,
- * which would also match our `nestedMutation:update` behavior. V4 ignored a
- * constraint's `@omit update` for nested `updateBy*` fields, so re-enable it
- * straight after the translated entry (an explicit `@behavior` set by the
- * user still comes later and wins).
- */
-function keepNestedUpdateDespiteV4Omit(tags: Record<string, any>) {
-  const behavior = tags.behavior;
-  const list: string[] = Array.isArray(behavior)
-    ? [...behavior]
-    : typeof behavior === "string"
-      ? [behavior]
-      : [];
-  const idx = list.findIndex((b) =>
-    String(b)
-      .split(/\s+/)
-      .some((token) => token === "-update"),
-  );
-  if (idx < 0) return;
-  list.splice(idx + 1, 0, "+nestedMutation:update");
-  tags.behavior = list;
-}
-
-const nestedBehaviors = [
-  "nestedMutation:connect",
-  "nestedMutation:insert",
-  "nestedMutation:update",
-  "nestedMutation:delete",
-  "nestedMutation:deleteOthers",
-] as const;
-
-function isTableInputScope(scope: GraphileBuild.ScopeInputObject) {
-  return (
-    !!scope.pgCodec &&
-    !!scope.isPgRowType &&
-    !scope.isPgBaseInput &&
-    (!!scope.isInputType || !!scope.isPgPatch)
-  );
-}
-
-export const PgNestedMutationsPlugin: GraphileConfig.Plugin = {
-  name: "PgNestedMutationsPlugin",
+export const PgNestedMutationsTypesPlugin: GraphileConfig.Plugin = {
+  name: "PgNestedMutationsTypesPlugin",
   description:
-    "Nested mutations (create/connect/update/delete related rows) on create and update mutations",
+    "Works out the nested mutation fields and registers their input types",
   version,
   after: [
-    "smart-tags",
+    "PgNestedMutationsInflectionPlugin",
+    "PgNestedMutationsBehaviorPlugin",
     "PgRelationsPlugin",
     "PgTablesPlugin",
     "PgAttributesPlugin",
@@ -109,93 +36,7 @@ export const PgNestedMutationsPlugin: GraphileConfig.Plugin = {
     "PostGraphileV4CompatibilityPlugin",
   ],
 
-  gather: {
-    hooks: {
-      pgRelations_relation(_info, event) {
-        const { pgConstraint, relation } = event;
-        const rawTags = pgConstraint.getTags() as Record<string, any>;
-        const v4OmitUpdate = v4OmitIncludes(rawTags.omit, "update");
-        const extensions = ((relation as any).extensions ??= {});
-        const tags = (extensions.tags ??= {});
-        if (v4OmitUpdate) keepNestedUpdateDespiteV4Omit(tags);
-        extensions.nestedMutations = {
-          constraintName: pgConstraint.conname,
-          constraintId: pgConstraint._id,
-          sortKey: [
-            Number(pgConstraint.conrelid),
-            [...(pgConstraint.conkey ?? [])],
-            Number(pgConstraint.confrelid ?? 0),
-            [...(pgConstraint.confkey ?? [])],
-            pgConstraint.conname,
-          ],
-          isSelfReference: pgConstraint.conrelid === pgConstraint.confrelid,
-          v4OmitUpdate,
-        };
-      },
-      pgTables_unique(_info, event) {
-        const { pgConstraint, unique } = event;
-        const extensions = ((unique as any).extensions ??= {});
-        extensions.nestedMutations = {
-          constraintName: pgConstraint.conname,
-          sortKey: [
-            Number(pgConstraint.conrelid),
-            [...(pgConstraint.conkey ?? [])],
-            0,
-            [],
-            pgConstraint.conname,
-          ],
-        };
-      },
-    },
-  },
-
-  inflection: {
-    add: inflectors,
-  },
-
   schema: {
-    behaviorRegistry: {
-      add: {
-        "nestedMutation:connect": {
-          description:
-            "nested mutations: can connect existing rows through this relation (connectBy*)",
-          entities: ["pgCodecRelation"],
-        },
-        "nestedMutation:insert": {
-          description:
-            "nested mutations: can create rows through this relation (create)",
-          entities: ["pgCodecRelation"],
-        },
-        "nestedMutation:update": {
-          description:
-            "nested mutations: can update related rows through this relation (updateBy*)",
-          entities: ["pgCodecRelation"],
-        },
-        "nestedMutation:delete": {
-          description:
-            "nested mutations: can delete related rows through this relation (deleteBy*, deleteOthers)",
-          entities: ["pgCodecRelation"],
-        },
-        "nestedMutation:deleteOthers": {
-          description:
-            "nested mutations: expose `deleteOthers` on this (reverse) relation",
-          entities: ["pgCodecRelation"],
-        },
-      },
-    },
-
-    entityBehavior: {
-      pgCodecRelation: {
-        inferred: {
-          provides: ["default"],
-          before: ["inferred", "override"],
-          callback(behavior) {
-            return [...nestedBehaviors, behavior];
-          },
-        },
-      },
-    },
-
     hooks: {
       build(build) {
         return build.extend(
@@ -212,184 +53,19 @@ export const PgNestedMutationsPlugin: GraphileConfig.Plugin = {
       },
 
       init(_, build) {
-        const state = buildNestedState(build);
-        build.pgNestedMutations.tables = state.tables;
-        build.pgNestedMutations.fieldsByTable = state.fieldsByTable;
-        build.pgNestedMutations.constraints = state.constraints;
+        Object.assign(build.pgNestedMutations, buildNestedState(build));
         registerTypes(build, build.pgNestedMutations);
         return _;
-      },
-
-      GraphQLInputObjectType_fields(fields, build, context) {
-        const { scope, fieldWithHooks } = context;
-        if (!isTableInputScope(scope)) return fields;
-        const resource = build.pgTableResource(scope.pgCodec as any) as
-          | PgTableResource
-          | undefined;
-        if (!resource) return fields;
-        const nestedFields = build.pgNestedMutations.fieldsByTable
-          .get(resource)
-          ?.filter((f) => f.enabled);
-        if (!nestedFields?.length) return fields;
-
-        const {
-          inflection,
-          graphql: { getNullableType },
-        } = build;
-        const newFields: GraphQLInputFieldConfigMap = Object.create(null);
-        for (const field of nestedFields.filter((f) => f.isForward)) {
-          // Allow nulls on keys that have forward mutations available.
-          for (const attributeName of field.localAttributes) {
-            const keyFieldName = inflection.attribute({
-              attributeName,
-              codec: resource.codec,
-            });
-            const type = build.getGraphQLTypeByPgCodec(
-              resource.codec.attributes[attributeName].codec,
-              "input",
-            ) as GraphQLInputType | undefined;
-            if (!type) continue;
-            newFields[keyFieldName] = {
-              ...(fields[keyFieldName] as any),
-              type: getNullableType(type) as GraphQLInputType,
-            };
-          }
-          newFields[field.fieldName] = nestedFieldSpec(
-            build,
-            fieldWithHooks,
-            field,
-          );
-        }
-        for (const field of nestedFields.filter((f) => !f.isForward)) {
-          newFields[field.fieldName] = nestedFieldSpec(
-            build,
-            fieldWithHooks,
-            field,
-          );
-        }
-        return Object.assign(Object.create(null), fields, newFields);
-      },
-
-      GraphQLObjectType_fields_field(field, build, context) {
-        const { scope } = context;
-        const {
-          isPgCreateMutation,
-          isPgUpdateMutation,
-          pgFieldResource,
-          fieldName,
-          fieldBehaviorScope,
-        } = scope as GraphileBuild.ScopeObjectFieldsField & {
-          isPgCreateMutation?: boolean;
-          isPgUpdateMutation?: boolean;
-          pgFieldResource?: PgTableResource;
-        };
-        if (!(isPgCreateMutation || isPgUpdateMutation) || !pgFieldResource) {
-          return field;
-        }
-        const state = build.pgNestedMutations;
-        const table = state.tables.get(pgFieldResource);
-        const nestedFields = state.fieldsByTable
-          .get(pgFieldResource)
-          ?.filter((f) => f.enabled);
-        if (!table || !nestedFields?.length) return field;
-        const { inflection } = build;
-
-        if (isPgCreateMutation) {
-          return {
-            ...field,
-            plan(_$root: any, fieldArgs: any) {
-              const $insert = new PgNestedInsertStep(
-                pgFieldResource,
-                state,
-                fieldArgs.getRaw(["input", "clientMutationId"]),
-              );
-              fieldArgs.apply($insert);
-              return object({ result: $insert });
-            },
-          } as typeof field;
-        }
-
-        // Update: work out which unique (or node ID) this field uses.
-        if (fieldBehaviorScope === "nodeId:resource:update") {
-          const pk = table.primaryKey;
-          if (!pk || !table.nodeIdHandler) return field;
-          const nodeIdFieldName = inflection.nodeIdFieldName();
-          return {
-            ...field,
-            plan(_$root: any, fieldArgs: any) {
-              const $update = new PgNestedUpdateStep(
-                pgFieldResource,
-                state,
-                {
-                  mode: "node",
-                  $nodeId: fieldArgs.getRaw(["input", nodeIdFieldName]),
-                  pk: pk.attributes,
-                },
-                fieldArgs.getRaw(["input", "clientMutationId"]),
-              );
-              fieldArgs.apply($update);
-              return object({ result: $update });
-            },
-          } as typeof field;
-        }
-        const unique = pgFieldResource.uniques.find(
-          (u: any) =>
-            inflection.updateByKeysField({
-              resource: pgFieldResource as any,
-              unique: u,
-            }) === fieldName,
-        );
-        if (!unique) return field;
-        const keyFields = (unique.attributes as string[]).map(
-          (attributeName) =>
-            [
-              attributeName,
-              inflection.attribute({ attributeName, codec: pgFieldResource.codec }),
-            ] as const,
-        );
-        return {
-          ...field,
-          plan(_$root: any, fieldArgs: any) {
-            const keys = Object.fromEntries(
-              keyFields.map(([attributeName, argName]) => [
-                attributeName,
-                fieldArgs.getRaw(["input", argName]),
-              ]),
-            );
-            const $update = new PgNestedUpdateStep(
-              pgFieldResource,
-              state,
-              { mode: "keys", keys },
-              fieldArgs.getRaw(["input", "clientMutationId"]),
-            );
-            fieldArgs.apply($update);
-            return object({ result: $update });
-          },
-        } as typeof field;
       },
     },
   },
 };
 
-function nestedFieldSpec(
-  build: GraphileBuild.Build,
-  fieldWithHooks: GraphileBuild.ContextInputObjectFields["fieldWithHooks"],
-  field: NestedRelationField,
-) {
-  return fieldWithHooks(
-    {
-      fieldName: field.fieldName,
-      isNestedMutationField: true,
-    },
-    () => ({
-      type: build.getInputTypeByName(field.connectorTypeName),
-      apply: makeApplyNestedField(field),
-    }),
-  );
-}
-
 /** Registers every input type the plugin may reference (V4 parity). */
-function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) {
+function registerTypes(
+  build: GraphileBuild.Build,
+  state: NestedMutationsState,
+) {
   const {
     inflection,
     graphql: { GraphQLNonNull, GraphQLList, GraphQLID, GraphQLBoolean },
@@ -447,11 +123,15 @@ function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) 
             ...(verb === "connect"
               ? {
                   isNestedMutationConnectInputType: true,
-                  ...(isNode ? { isNestedMutationConnectByNodeIdType: true } : null),
+                  ...(isNode
+                    ? { isNestedMutationConnectByNodeIdType: true }
+                    : null),
                 }
               : {
                   isNestedMutationDeleteInputType: true,
-                  ...(isNode ? { isNestedMutationDeleteByNodeIdType: true } : null),
+                  ...(isNode
+                    ? { isNestedMutationDeleteByNodeIdType: true }
+                    : null),
                 }),
             pgNestedTable: resource,
           },
@@ -472,7 +152,7 @@ function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) 
                   fields: () =>
                     keyAttributeFields(table, keyField.unique!.attributes),
                 },
-          `PgNestedMutationsPlugin ${verb} type for ${resource.name}`,
+          `PgNestedMutationsTypesPlugin ${verb} type for ${resource.name}`,
         );
       }
     }
@@ -515,7 +195,7 @@ function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) 
               (name) => !omittedFields.includes(name),
             ),
         }),
-        `PgNestedMutationsPlugin patch type for ${foreignResource.name} via ${constraint.name}`,
+        `PgNestedMutationsTypesPlugin patch type for ${foreignResource.name} via ${constraint.name}`,
       );
 
       for (const updaterField of updaterFields) {
@@ -564,7 +244,7 @@ function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) 
                     ),
                   }),
                 },
-          `PgNestedMutationsPlugin update type for ${foreignResource.name} via ${constraint.name}`,
+          `PgNestedMutationsTypesPlugin update type for ${foreignResource.name} via ${constraint.name}`,
         );
       }
     }
@@ -591,7 +271,7 @@ function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) 
             description: `The \`${foreignTableName}\` to be created by this mutation.`,
             fields: () => copyInputFields(build, foreignTable.inputTypeName!),
           }),
-          `PgNestedMutationsPlugin create type for ${field.constraint.name}`,
+          `PgNestedMutationsTypesPlugin create type for ${field.constraint.name}`,
         );
       }
 
@@ -619,7 +299,7 @@ function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) 
               const deleteOthersAllowed = relationAllows(
                 build,
                 field,
-                "nestedMutation:deleteOthers",
+                nestedBehavior.deleteOthers,
               );
               if (deleteOthersAllowed) {
                 operations.deleteOthers = {
@@ -681,7 +361,7 @@ function registerTypes(build: GraphileBuild.Build, state: NestedMutationsState) 
             return operations;
           },
         }),
-        `PgNestedMutationsPlugin connector type for ${field.constraint.name}`,
+        `PgNestedMutationsTypesPlugin connector type for ${field.constraint.name}`,
       );
     }
   }
@@ -699,7 +379,9 @@ function relationAllows(
     relation ??
     field.constraint.forwardRelation ??
     field.constraint.backwardRelation;
-  return !!entity && !!build.behavior.pgCodecRelationMatches(entity, filter as any);
+  return (
+    !!entity && !!build.behavior.pgCodecRelationMatches(entity, filter as any)
+  );
 }
 
 function findConstraint(state: NestedMutationsState, constraintId: string) {
@@ -726,5 +408,3 @@ function copyInputFields(
   }
   return out;
 }
-
-export type { NestedUpdaterField };

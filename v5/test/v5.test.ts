@@ -9,7 +9,7 @@ import type { GraphQLInputObjectType } from "postgraphile/graphql";
 import { PostGraphileAmberPreset } from "postgraphile/presets/amber";
 import { makeV4Preset } from "postgraphile/presets/v4";
 
-import { NestedMutationsPreset } from "../src/index.ts";
+import { PgNestedMutationsPreset } from "../src/index.ts";
 import { buildSchema, execute, withRolledBackClient } from "./support/harness.ts";
 
 const setup = (constraintComment = "") => `
@@ -24,7 +24,7 @@ const setup = (constraintComment = "") => `
 `;
 
 const v4Preset = (extra: GraphileConfig.Preset = {}): GraphileConfig.Preset => ({
-  extends: [PostGraphileAmberPreset, makeV4Preset({}), NestedMutationsPreset],
+  extends: [PostGraphileAmberPreset, makeV4Preset({}), PgNestedMutationsPreset],
   ...extra,
 });
 
@@ -53,7 +53,7 @@ test("behaviors toggle nested operations per relation", async () => {
   });
 });
 
-test("an explicit @behavior wins over the V4 `@omit update` compatibility", async () => {
+test("`@omit update` with `-nestedMutation:update` hides nested updateBy* fields", async () => {
   await withRolledBackClient(async (client) => {
     await client.query(
       setup(`comment on constraint child_parent_fkey on p.child is
@@ -130,7 +130,7 @@ test("works without the V4 preset (native V5 naming)", async () => {
   await withRolledBackClient(async (client) => {
     await client.query(setup("insert into p.parent (name) values ('existing');"));
     const built = await buildSchema(client, {
-      extends: [PostGraphileAmberPreset, NestedMutationsPreset],
+      extends: [PostGraphileAmberPreset, PgNestedMutationsPreset],
     });
     const parentFields = fieldsOf(built.schema, "ParentInput");
     assert.deepEqual(parentFields, ["rowId", "name", "childrenUsingRowId"]);

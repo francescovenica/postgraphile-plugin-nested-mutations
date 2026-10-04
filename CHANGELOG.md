@@ -3,12 +3,20 @@
 ## Unreleased
 
 - Add a PostGraphile V5 version under `postgraphile-plugin-nested-mutations/v5`
-  (`NestedMutationsPreset`, `PgNestedMutationsPlugin`) with schema and
+  (`PgNestedMutationsPreset`) with schema and
   behaviour parity with V4. See MIGRATION.md.
 - V5: new per-relation behaviors `nestedMutation:connect`, `:insert`, `:update`,
   `:delete` and `:deleteOthers`; new inflectors `nestedFieldName` and
   `nestedTableFieldName`.
 - V4: `nestedMutationsList` is optional again (unset means no filtering).
+- V5: the preset is split into one plugin per concern, following the V5
+  community plugins: `PgNestedMutationsInflectionPlugin`, `…GatherPlugin`,
+  `…BehaviorPlugin`, `…TypesPlugin`, `…FieldsPlugin` and `…PlansPlugin`.
+  `NestedMutationsPreset` and `PgNestedMutationsPlugin` are renamed/removed.
+- V5: the options are also typed on `makeV4Preset({ graphileBuildOptions })`.
+- V5: `@omit` is no longer parsed by the plugin; the V4 preset translates it.
+  A constraint with `@omit update` now hides nested `updateBy*` fields, which
+  differs from V4 (documented in parity/known-differences.cjs).
 - Parity test harness (V4 recordings replayed against V5), transaction and
   RLS tests, and CI for both versions.
 

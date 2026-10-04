@@ -10,6 +10,7 @@ import type {
   NestedUpdaterField,
   PgTableResource,
 } from "./interfaces.ts";
+import { nestedBehavior } from "./PgNestedMutationsBehaviorPlugin.ts";
 import { resolveOptions } from "./options.ts";
 
 type SortKey = NestedUnique["sortKey"];
@@ -156,17 +157,21 @@ export function buildNestedState(
     const tableTypeName = inflection.tableType(codec);
     const nodeIdHandler =
       typeof build.getNodeIdHandler === "function"
-        ? (build.getNodeIdHandler(tableTypeName) ?? null)
+        ? build.getNodeIdHandler(tableTypeName) ?? null
         : null;
     const primaryKey = deduped.find((u) => u.isPrimary) ?? null;
 
     const insertableAttributes = new Set<string>();
     const updatableAttributes = new Set<string>();
     for (const attributeName of Object.keys(codec.attributes)) {
-      if (attributeMatches(build, resource, attributeName, "attribute:insert")) {
+      if (
+        attributeMatches(build, resource, attributeName, "attribute:insert")
+      ) {
         insertableAttributes.add(attributeName);
       }
-      if (attributeMatches(build, resource, attributeName, "attribute:update")) {
+      if (
+        attributeMatches(build, resource, attributeName, "attribute:update")
+      ) {
         updatableAttributes.add(attributeName);
       }
     }
@@ -185,6 +190,7 @@ export function buildNestedState(
       updaterFields: new Map(),
       insertableAttributes,
       updatableAttributes,
+      nullableKeyFieldNames: new Map(),
     });
   }
 
@@ -193,7 +199,10 @@ export function buildNestedState(
   // ---------------------------------------------------------------------------
   const constraintsById = new Map<string, NestedConstraint>();
   for (const resource of resources) {
-    const relations = resource.getRelations() as Record<string, PgCodecRelation>;
+    const relations = resource.getRelations() as Record<
+      string,
+      PgCodecRelation
+    >;
     for (const [relationName, relation] of Object.entries(relations)) {
       const info = relation.extensions?.nestedMutations;
       if (!info) continue;
@@ -220,7 +229,6 @@ export function buildNestedState(
           backwardRelation: null,
           backwardRelationName: null,
           sortKey: info.sortKey,
-          v4OmitUpdate: info.v4OmitUpdate,
         };
         constraintsById.set(info.constraintId, c);
       }
@@ -297,7 +305,9 @@ export function buildNestedState(
       table.connectorFields.push({
         unique: null,
         fieldName: inflection.nestedConnectByNodeIdField(),
-        typeName: inflection.nestedConnectByNodeIdInputType({ table: resource }),
+        typeName: inflection.nestedConnectByNodeIdInputType({
+          table: resource,
+        }),
       });
       table.deleterFields.push({
         unique: null,
@@ -320,7 +330,12 @@ export function buildNestedState(
       if (
         constraint.keyAttributes.some(
           (a) =>
-            !attributeMatches(build, constraint.resource, a, "attribute:select"),
+            !attributeMatches(
+              build,
+              constraint.resource,
+              a,
+              "attribute:select",
+            ),
         )
       ) {
         continue;
@@ -335,7 +350,13 @@ export function buildNestedState(
         constraint.resource === resource
           ? constraint.forwardRelation
           : constraint.backwardRelation;
-      if (!relationMatches(build, relation ?? anyRelation(constraint), "nestedMutation:update")) {
+      if (
+        !relationMatches(
+          build,
+          relation ?? anyRelation(constraint),
+          nestedBehavior.update,
+        )
+      ) {
         continue;
       }
       const patchFieldName = inflection.patchField(
@@ -348,7 +369,12 @@ export function buildNestedState(
           (u) =>
             !u.attributes.some(
               (a) =>
-                !attributeMatches(build, foreignResource, a, "attribute:select"),
+                !attributeMatches(
+                  build,
+                  foreignResource,
+                  a,
+                  "attribute:select",
+                ),
             ),
         );
       for (const keyConstraint of keyUniques) {
@@ -366,7 +392,11 @@ export function buildNestedState(
           }),
         });
       }
-      if (nodeIdFieldName && foreignTable.primaryKey && foreignTable.nodeIdHandler) {
+      if (
+        nodeIdFieldName &&
+        foreignTable.primaryKey &&
+        foreignTable.nodeIdHandler
+      ) {
         fields.push({
           unique: null,
           patchFieldName,
@@ -389,9 +419,7 @@ export function buildNestedState(
     const { resource } = table;
     if (!table.inputTypeName) continue;
     const related = allConstraints
-      .filter(
-        (c) => c.resource === resource || c.foreignResource === resource,
-      )
+      .filter((c) => c.resource === resource || c.foreignResource === resource)
       .filter(constraintReadable);
     if (!related.length) continue;
     const fields: NestedRelationField[] = [];
@@ -415,7 +443,7 @@ export function buildNestedState(
       const canConnect = relationMatches(
         build,
         behaviorEntity,
-        "nestedMutation:connect",
+        nestedBehavior.connect,
       );
       const connectable =
         canConnect &&
@@ -427,22 +455,26 @@ export function buildNestedState(
         );
       const creatable =
         resourceMatches(build, foreignResource, "resource:insert") &&
-        relationMatches(build, behaviorEntity, "nestedMutation:insert") &&
+        relationMatches(build, behaviorEntity, nestedBehavior.insert) &&
         !constraint.keyAttributes.some(
           (a) =>
-            !attributeMatches(build, constraint.resource, a, "attribute:insert"),
+            !attributeMatches(
+              build,
+              constraint.resource,
+              a,
+              "attribute:insert",
+            ),
         );
       // V4: `!omit(foreignTable, 'update') && !omit(constraint, 'update')`;
       // only used to decide whether the relation is exposed at all.
       const updateable =
         resourceMatches(build, foreignResource, "resource:update") &&
-        !constraint.v4OmitUpdate &&
-        relationMatches(build, behaviorEntity, "nestedMutation:update");
+        relationMatches(build, behaviorEntity, nestedBehavior.update);
       const deleteable =
         options.nestedMutationsDeleteOthers &&
         !!foreignTable.primaryKey &&
         resourceMatches(build, foreignResource, "resource:delete") &&
-        relationMatches(build, behaviorEntity, "nestedMutation:delete");
+        relationMatches(build, behaviorEntity, nestedBehavior.delete);
 
       if (
         (!connectable && !creatable && !deleteable && !updateable) ||
@@ -495,6 +527,14 @@ export function buildNestedState(
         deleterFields: deleteable ? foreignTable.deleterFields : [],
         updaterFields: table.updaterFields.get(constraint.id) ?? [],
       });
+      if (enabled && isForward) {
+        for (const attributeName of constraint.keyAttributes) {
+          table.nullableKeyFieldNames.set(
+            inflection.attribute({ attributeName, codec: table.codec }),
+            attributeName,
+          );
+        }
+      }
     }
   }
 
@@ -510,7 +550,10 @@ export function buildNestedState(
  * with the foreign table's unique constraints; for forward relations that
  * compares numbers across two different tables. Only used for naming.
  */
-function hasUniqueOver(foreignTable: NestedTable, constraint: NestedConstraint) {
+function hasUniqueOver(
+  foreignTable: NestedTable,
+  constraint: NestedConstraint,
+) {
   const keyNums = constraint.sortKey[1];
   return foreignTable.uniques.some(
     (u) =>

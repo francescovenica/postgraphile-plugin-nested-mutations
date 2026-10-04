@@ -16,10 +16,10 @@ the new `nestedMutation:*` behaviors and the known differences.
 // graphile.config.mjs
 import { PostGraphileAmberPreset } from 'postgraphile/presets/amber';
 import { makeV4Preset } from 'postgraphile/presets/v4';
-import { NestedMutationsPreset } from 'postgraphile-plugin-nested-mutations/v5';
+import { PgNestedMutationsPreset } from 'postgraphile-plugin-nested-mutations/v5';
 
 export default {
-  extends: [PostGraphileAmberPreset, makeV4Preset({}), NestedMutationsPreset],
+  extends: [PostGraphileAmberPreset, makeV4Preset({}), PgNestedMutationsPreset],
   schema: { nestedMutationsSimpleFieldNames: true },
   // pgServices: [...]
 };

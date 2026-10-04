@@ -23,6 +23,47 @@ module.exports = [
   },
   {
     file: 'cases-smartTags',
+    case: '@omit update on the foreign key (V4 keeps nested updateBy)',
+    reason:
+      'V4 ignored a constraint-level `@omit update` for nested updateBy* fields. ' +
+      'V5 no longer parses V4 `@omit` itself and leaves it to the V4 preset, which ' +
+      'turns `@omit update` into a negative `update` behavior on the relation, so ' +
+      'the nested updateBy* fields are not offered.',
+    schemaChanges: [
+      "Input field 'updateById' was removed from input object type 'ChildParentFkeyInput'",
+      "Input field 'updateById' was removed from input object type 'ChildParentFkeyInverseInput'",
+      "Input field 'updateByNodeId' was removed from input object type 'ChildParentFkeyInput'",
+      "Input field 'updateByNodeId' was removed from input object type 'ChildParentFkeyInverseInput'",
+      "Type 'ChildOnChildForChildParentFkeyNodeIdUpdate' was removed",
+      "Type 'ChildOnChildForChildParentFkeyUsingChildPkeyUpdate' was removed",
+      "Type 'ParentOnChildForChildParentFkeyNodeIdUpdate' was removed",
+      "Type 'ParentOnChildForChildParentFkeyUsingParentPkeyUpdate' was removed",
+      "Type 'updateChildOnChildForChildParentFkeyPatch' was removed",
+      "Type 'updateParentOnChildForChildParentFkeyPatch' was removed",
+    ],
+    adjust: {
+      fromOperation: 0,
+      result() {
+        return {
+          data: null,
+          errors: [
+            {
+              message:
+                'Field "updateById" is not defined by type "ChildParentFkeyInverseInput". Did you mean "deleteById"?',
+              path: null,
+            },
+          ],
+        };
+      },
+      // The whole request is rejected, so the child row keeps its name.
+      dbState(state) {
+        state.child[0].name = 'c1';
+        return state;
+      },
+    },
+  },
+  {
+    file: 'cases-smartTags',
     case: '@omit read on the foreign key column',
     reason:
       'With the FK column omitted for read/create/update, V4 still exposed nested ' +

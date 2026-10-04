@@ -38,7 +38,7 @@ app.use(
 import { PostGraphileAmberPreset } from 'postgraphile/presets/amber';
 import { makeV4Preset } from 'postgraphile/presets/v4';
 import { makePgService } from 'postgraphile/adaptors/pg';
-import { NestedMutationsPreset } from 'postgraphile-plugin-nested-mutations/v5';
+import { PgNestedMutationsPreset } from 'postgraphile-plugin-nested-mutations/v5';
 
 export default {
   extends: [
@@ -46,7 +46,7 @@ export default {
     makeV4Preset({
       /* your other V4 options: jwtSecret, pgSettings, ignoreRBAC, ... */
     }),
-    NestedMutationsPreset,
+    PgNestedMutationsPreset,
   ],
   pgServices: [
     makePgService({
@@ -61,7 +61,11 @@ export default {
 };
 ```
 
-`PgNestedMutationsPlugin` is also exported if you build your own preset.
+If you build your own preset, the plugins are also exported individually:
+`PgNestedMutationsInflectionPlugin`, `PgNestedMutationsGatherPlugin`,
+`PgNestedMutationsBehaviorPlugin`, `PgNestedMutationsTypesPlugin`,
+`PgNestedMutationsFieldsPlugin` and `PgNestedMutationsPlansPlugin`. Include
+all six.
 
 ### Options
 

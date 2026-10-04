@@ -2,6 +2,7 @@
 import type {} from "postgraphile";
 import type {} from "postgraphile/graphile-build";
 import type {} from "postgraphile/graphile-build-pg";
+import type {} from "postgraphile/presets/v4";
 import type {
   PgCodecRelation,
   PgCodecWithAttributes,
@@ -33,13 +34,6 @@ export interface NestedRelationGatherInfo {
   sortKey: [number, number[], number, number[], string];
   /** Whether this is a self-referential constraint */
   isSelfReference: boolean;
-  /**
-   * The constraint carried a V4 `@omit update`. V4 ignored this for the
-   * nested `updateBy*` fields, so the gather phase re-enables
-   * `nestedMutation:update` for parity; we still need it for V4's
-   * "is anything possible on this relation" check.
-   */
-  v4OmitUpdate: boolean;
 }
 
 export interface NestedUniqueGatherInfo {
@@ -79,7 +73,6 @@ export interface NestedConstraint {
   backwardRelation: PgCodecRelation | null;
   backwardRelationName: string | null;
   sortKey: NestedRelationGatherInfo["sortKey"];
-  v4OmitUpdate: boolean;
 }
 
 /** A `connectBy*`/`deleteBy*` field (or the node ID variant). */
@@ -112,6 +105,11 @@ export interface NestedTable {
   /** Attributes the nested logic may write on insert/update (V4 `omit`) */
   insertableAttributes: Set<string>;
   updatableAttributes: Set<string>;
+  /**
+   * Key fields on the input/patch types that become nullable because an
+   * enabled forward nested field can set them: field name -> attribute name.
+   */
+  nullableKeyFieldNames: Map<string, string>;
 }
 
 /** One nested relation field on a table's input/patch type. */
@@ -299,6 +297,12 @@ declare global {
     }
   }
 
+  namespace GraphileConfig {
+    interface GatherHelpers {
+      pgNestedMutations: Record<string, never>;
+    }
+  }
+
   namespace DataplanPg {
     interface PgCodecRelationExtensions {
       nestedMutations?: NestedRelationGatherInfo;
@@ -306,5 +310,14 @@ declare global {
     interface PgResourceUniqueExtensions {
       nestedMutations?: NestedUniqueGatherInfo;
     }
+  }
+}
+
+declare module "postgraphile/presets/v4" {
+  interface V4GraphileBuildOptions {
+    nestedMutationsSimpleFieldNames?: boolean;
+    nestedMutationsDeleteOthers?: boolean;
+    nestedMutationsOldUniqueFields?: boolean;
+    nestedMutationsList?: Record<string, ReadonlyArray<string>>;
   }
 }
